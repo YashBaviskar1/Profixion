@@ -1,28 +1,68 @@
+import Logo from './Logo'
+import { motion } from 'framer-motion'
 
 export default function Navbar() {
     return (
-      <nav className="sticky top-0 backdrop-blur-md bg-black/90 border-b border-gray-800/50 z-50">
+      <motion.nav 
+        initial={{ y: -100, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ duration: 0.6, ease: "easeOut" }}
+        className="sticky top-0 backdrop-blur-md bg-black/90 border-b border-gray-800/50 z-50"
+      >
         <div className="max-w-7xl mx-auto px-6 py-4">
           <div className="flex justify-between items-center">
-            <div className="flex items-center space-x-2">
-              <div className="w-8 h-8 bg-gradient-to-r from-gray-600 to-gray-800 rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-sm">P</span>
-              </div>
-              <h1 className="text-2xl font-bold bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">
-                Profixion
-              </h1>
-            </div>
+            <motion.div
+              whileHover={{ scale: 1.05 }}
+              transition={{ duration: 0.2 }}
+            >
+              <Logo />
+            </motion.div>
+            
             <div className="hidden md:flex space-x-8">
-              <a href="#features" className="text-gray-300 hover:text-white transition-colors duration-300 font-medium">Features</a>
-              <a href="#how" className="text-gray-300 hover:text-white transition-colors duration-300 font-medium">How it Works</a>
-              <a href="#pricing" className="text-gray-300 hover:text-white transition-colors duration-300 font-medium">Pricing</a>
-              <a href="#contact" className="bg-gradient-to-r from-gray-600 to-gray-800 text-white px-6 py-2 rounded-full hover:shadow-lg hover:from-gray-500 hover:to-gray-700 transition-all duration-300 font-medium">
-                Get Started
-              </a>
+              <motion.a 
+                href="#features" 
+                className="relative text-gray-300 hover:text-white transition-colors duration-300 font-medium group"
+                whileHover={{ scale: 1.05 }}
+                transition={{ duration: 0.2 }}
+              >
+                Features
+                <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-gray-400 to-gray-600 transition-all duration-300 group-hover:w-full"></span>
+              </motion.a>
+              
+              <motion.a 
+                href="#how" 
+                className="relative text-gray-300 hover:text-white transition-colors duration-300 font-medium group"
+                whileHover={{ scale: 1.05 }}
+                transition={{ duration: 0.2 }}
+              >
+                How it Works
+                <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-gray-400 to-gray-600 transition-all duration-300 group-hover:w-full"></span>
+              </motion.a>
+              
+              <motion.a 
+                href="#pricing" 
+                className="relative text-gray-300 hover:text-white transition-colors duration-300 font-medium group"
+                whileHover={{ scale: 1.05 }}
+                transition={{ duration: 0.2 }}
+              >
+                Pricing
+                <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-gray-400 to-gray-600 transition-all duration-300 group-hover:w-full"></span>
+              </motion.a>
+              
+              <motion.a 
+                href="#contact" 
+                className="relative overflow-hidden bg-gradient-to-r from-gray-600 to-gray-800 text-white px-6 py-3 rounded-full hover:shadow-lg hover:shadow-gray-500/25 transition-all duration-300 font-medium group"
+                whileHover={{ scale: 1.05, y: -2 }}
+                whileTap={{ scale: 0.95 }}
+                transition={{ duration: 0.2 }}
+              >
+                <span className="relative z-10">Get Started</span>
+                <div className="absolute inset-0 bg-gradient-to-r from-gray-700 to-gray-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+              </motion.a>
             </div>
           </div>
         </div>
-      </nav>
+      </motion.nav>
     )
   }
   
