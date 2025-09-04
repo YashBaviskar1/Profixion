@@ -25,3 +25,5 @@ dist-ssr
 
 
 src/assets/
+
+backend/node_modules

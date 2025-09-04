@@ -1,0 +1,16 @@
+### Test server root
+GET http://localhost:3001/
+
+### Submit audit request
+POST http://localhost:3001/api/audit/submit
+Content-Type: application/json
+
+{
+  "profileUrl": "https://linkedin.com/in/test"
+}
+
+### Check audit status
+GET http://localhost:3001/api/audit/status/audit_1234
+
+### Get audit results
+GET http://localhost:3001/api/audit/results/audit_1234
