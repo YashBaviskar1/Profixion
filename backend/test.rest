@@ -1,7 +1,7 @@
-### Test server root
+### Root server check
 GET http://localhost:3001/
 
-### Submit audit request
+### Submit a new audit request
 POST http://localhost:3001/api/audit/submit
 Content-Type: application/json
 
@@ -9,8 +9,8 @@ Content-Type: application/json
   "profileUrl": "https://linkedin.com/in/test"
 }
 
-### Check audit status
-GET http://localhost:3001/api/audit/status/audit_1234
+### Check audit status (replace with real trackingId from submit response)
+GET http://localhost:3001/api/audit/status/audit_1756949004569
 
-### Get audit results
-GET http://localhost:3001/api/audit/results/audit_1234
+### Get audit results (replace with real trackingId from submit response)
+GET http://localhost:3001/api/audit/results/audit_1693849294949
