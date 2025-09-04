@@ -1,45 +1,86 @@
-# 📄 backend/README.md
+# Profixion Backend - Razorpay Integration
 
-# Backend Workflow
+## Setup Instructions
 
-This branch is for **backend development only**.
-
----
-
-## 🛠 Checkout & Setup
-
+### 1. Install Dependencies
 ```bash
-# Switch to backend branch
-git checkout backend
-git pull origin backend
+npm install
 ```
 
-## 💻 Day-to-Day Workflow
+### 2. Environment Configuration
+Create a `.env` file in the backend directory with your Razorpay credentials:
 
-Make changes in the `/backend` folder only.
-
-Stage, commit, and push:
-
-```bash
-git add .
-git commit -m "describe your backend changes"
-git push origin backend
+```env
+RAZORPAY_KEY_ID=your_razorpay_key_id_here
+RAZORPAY_KEY_SECRET=your_razorpay_key_secret_here
+PORT=5000
 ```
 
-## 🔗 Integration to Dev
+### 3. Get Razorpay Credentials
+1. Sign up at [Razorpay Dashboard](https://dashboard.razorpay.com/)
+2. Go to Settings → API Keys
+3. Generate a new key pair
+4. Copy the Key ID and Key Secret to your `.env` file
 
-When you are ready to test with frontend:
-
+### 4. Run the Server
 ```bash
-# Switch to dev branch
-git checkout dev
-git pull origin dev
+# Development mode
+npm run dev
 
-# Merge backend changes into dev
-git merge backend
-
-# Push updated dev
-git push origin dev
+# Production mode
+npm start
 ```
 
-The dev branch now contains your latest backend + frontend work.
+The server will start on `http://localhost:5000`
+
+## API Endpoints
+
+### POST /api/payment/orders
+Creates a new Razorpay order.
+
+**Request Body:**
+```json
+{
+  "amount": 299
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "order": {
+    "id": "order_xxx",
+    "amount": 29900,
+    "currency": "INR",
+    "receipt": "receipt_xxx"
+  }
+}
+```
+
+### POST /api/payment/verify
+Verifies the payment signature.
+
+**Request Body:**
+```json
+{
+  "razorpay_order_id": "order_xxx",
+  "razorpay_payment_id": "pay_xxx",
+  "razorpay_signature": "signature_xxx"
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "Payment verified successfully",
+  "payment_id": "pay_xxx"
+}
+```
+
+## Security Notes
+- Never commit your `.env` file to version control
+- Use test credentials for development
+- Verify payment signatures on the server side
+- Handle errors gracefully in production
