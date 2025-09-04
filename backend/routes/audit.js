@@ -1,41 +1,62 @@
 import { Router } from 'express';
+import supabase from '../supabaseClient.js';
 
 const router = Router();
 
 /**
  * @route   POST /api/audit/submit
  */
-router.post('/submit', (req, res) => {
+router.post('/submit', async (req, res) => {
   const { profileUrl } = req.body;
 
   if (!profileUrl) {
     return res.status(400).json({ msg: 'Please provide a profile URL' });
   }
 
-  console.log(`Received profile URL for audit: ${profileUrl}`);
+  const trackingId = `audit_${Date.now()}`;
 
-  res.json({ 
-    success: true, 
+  // Insert into Supabase
+  const { data, error } = await supabase
+    .from('audits')
+    .insert([
+      { tracking_id: trackingId, profile_url: profileUrl, status: 'pending' }
+    ])
+    .select();
+
+  if (error) {
+    console.error(error);
+    return res.status(500).json({ success: false, msg: 'Database insert failed' });
+  }
+
+  res.json({
+    success: true,
     message: 'Profile submitted for audit successfully.',
-    data: {
-      trackingId: `audit_${new Date().getTime()}`
-    }
+    data: { trackingId }
   });
 });
 
 /**
  * @route   GET /api/audit/status/:trackingId
  */
-router.get('/status/:trackingId', (req, res) => {
+router.get('/status/:trackingId', async (req, res) => {
   const { trackingId } = req.params;
-  console.log(`Checking status for tracking ID: ${trackingId}`);
+
+  const { data, error } = await supabase
+    .from('audits')
+    .select('tracking_id, status')
+    .eq('tracking_id', trackingId)
+    .single();
+
+  if (error || !data) {
+    return res.status(404).json({ success: false, msg: 'Audit not found' });
+  }
 
   res.json({
     success: true,
     data: {
-      trackingId,
-      status: 'pending',
-      message: 'Audit is currently in progress.'
+      trackingId: data.tracking_id,
+      status: data.status,
+      message: `Audit is currently ${data.status}.`
     }
   });
 });
@@ -43,12 +64,22 @@ router.get('/status/:trackingId', (req, res) => {
 /**
  * @route   GET /api/audit/results/:trackingId
  */
-router.get('/results/:trackingId', (req, res) => {
+router.get('/results/:trackingId', async (req, res) => {
   const { trackingId } = req.params;
-  console.log(`Fetching results for tracking ID: ${trackingId}`);
+
+  // For now, just fetch from Supabase and return dummy results
+  const { data, error } = await supabase
+    .from('audits')
+    .select('*')
+    .eq('tracking_id', trackingId)
+    .single();
+
+  if (error || !data) {
+    return res.status(404).json({ success: false, msg: 'Audit not found' });
+  }
 
   const reportData = {
-    profileUrl: "https://www.linkedin.com/in/example",
+    profileUrl: data.profile_url,
     overallScore: 85,
     strengths: [
       "Strong headline and summary.",
