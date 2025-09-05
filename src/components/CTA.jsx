@@ -1,12 +1,26 @@
 import { useState } from "react"
+import toast from "react-hot-toast"
+import { Loader2 } from "lucide-react"
+import { submitAudit } from "../api"
 
 export default function CTA() {
   const [profile, setProfile] = useState("")
+  const [isLoading, setIsLoading] = useState(false)
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
-    alert(`Submitted profile: ${profile}`)
-    // Later: call backend API here
+    setIsLoading(true)
+    
+    try {
+      const data = await submitAudit(profile)
+      toast.success(data.message || 'Profile submitted successfully!')
+      setProfile("") // Clear the form on success
+    } catch (error) {
+      console.error('Error submitting profile:', error)
+      toast.error('Failed to submit')
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   return (
@@ -44,9 +58,17 @@ export default function CTA() {
             </div>
             <button
               type="submit"
-              className="px-8 py-4 bg-gradient-to-r from-gray-600 to-gray-800 text-white font-semibold rounded-xl hover:shadow-2xl hover:scale-105 transition-all duration-300 whitespace-nowrap"
+              disabled={isLoading}
+              className="px-8 py-4 bg-gradient-to-r from-gray-600 to-gray-800 text-white font-semibold rounded-xl hover:shadow-2xl hover:scale-105 transition-all duration-300 whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
             >
-              Start Audit
+              {isLoading ? (
+                <>
+                  <Loader2 className="w-5 h-5 animate-spin inline-block mr-2" />
+                  Submitting...
+                </>
+              ) : (
+                'Start Audit'
+              )}
             </button>
           </div>
         </form>

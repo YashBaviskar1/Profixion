@@ -62,6 +62,31 @@ router.get('/status/:trackingId', async (req, res) => {
 });
 
 /**
+ * @route   GET /api/audit/list
+ */
+router.get('/list', async (req, res) => {
+  try {
+    const { data, error } = await supabase
+      .from('audits')
+      .select('tracking_id, profile_url, status, created_at')
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('Error fetching audits:', error);
+      return res.status(500).json({ success: false, msg: 'Failed to fetch audits' });
+    }
+
+    res.json({
+      success: true,
+      data: data || []
+    });
+  } catch (error) {
+    console.error('Unexpected error:', error);
+    res.status(500).json({ success: false, msg: 'Internal server error' });
+  }
+});
+
+/**
  * @route   GET /api/audit/results/:trackingId
  */
 router.get('/results/:trackingId', async (req, res) => {
