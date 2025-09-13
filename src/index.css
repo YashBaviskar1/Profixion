@@ -85,3 +85,27 @@ html {
   100% { background-position: 0% 50%; }
 }
 
+/* CTA Button gradient animation */
+@keyframes cta-gradient-loop {
+  0% { 
+    background: linear-gradient(45deg, #3b82f6, #8b5cf6);
+  }
+  25% { 
+    background: linear-gradient(45deg, #8b5cf6, #06b6d4);
+  }
+  50% { 
+    background: linear-gradient(45deg, #06b6d4, #3b82f6);
+  }
+  75% { 
+    background: linear-gradient(45deg, #3b82f6, #8b5cf6);
+  }
+  100% { 
+    background: linear-gradient(45deg, #3b82f6, #8b5cf6);
+  }
+}
+
+.cta-gradient-animate {
+  animation: cta-gradient-loop 4s ease-in-out infinite;
+  background-size: 200% 200%;
+}
+

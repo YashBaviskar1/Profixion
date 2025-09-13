@@ -2,10 +2,12 @@ import { useState } from "react"
 import toast from "react-hot-toast"
 import { Loader2 } from "lucide-react"
 import { submitAudit } from "../api"
+import PaymentButton from "./PaymentButton"
 
 export default function CTA() {
   const [profile, setProfile] = useState("")
   const [isLoading, setIsLoading] = useState(false)
+  const [trackingId, setTrackingId] = useState(null)
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -14,6 +16,8 @@ export default function CTA() {
     try {
       const data = await submitAudit(profile)
       toast.success(data.message || 'Profile submitted successfully!')
+      const newTrackingId = data?.data?.trackingId
+      if (newTrackingId) setTrackingId(newTrackingId)
       setProfile("") // Clear the form on success
     } catch (error) {
       console.error('Error submitting profile:', error)
@@ -59,7 +63,7 @@ export default function CTA() {
             <button
               type="submit"
               disabled={isLoading}
-              className="px-8 py-4 bg-gradient-to-r from-gray-600 to-gray-800 text-white font-semibold rounded-xl hover:shadow-2xl hover:scale-105 transition-all duration-300 whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+              className="px-8 py-4 cta-gradient-animate text-white font-semibold rounded-xl hover:shadow-2xl hover:scale-105 transition-all duration-300 whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
             >
               {isLoading ? (
                 <>
@@ -70,6 +74,9 @@ export default function CTA() {
                 'Start Audit'
               )}
             </button>
+            {trackingId && (
+              <PaymentButton amount={499} trackingId={trackingId} />
+            )}
           </div>
         </form>
 
@@ -84,7 +91,7 @@ export default function CTA() {
           </div>
           <div className="flex items-center">
             <div className="w-2 h-2 bg-gray-700 rounded-full mr-2"></div>
-            <span>100% free forever plan</span>
+            <span>Professional audit service</span>
           </div>
         </div>
       </div>

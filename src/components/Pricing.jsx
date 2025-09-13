@@ -100,15 +100,12 @@ export default function Pricing() {
 
                 {/* Footer */}
                 <div className="mt-8">
-                  <button
-                    className={`w-full h-12 px-6 rounded-xl font-semibold transition-all duration-300 ${
-                      plan.popular
-                        ? 'bg-gradient-to-r from-gray-600 to-gray-800 text-white hover:shadow-lg hover:scale-105'
-                        : 'bg-gray-800 text-gray-300 border-2 border-gray-700 hover:border-gray-600 hover:text-white'
-                    }`}
+                  <a
+                    href="#contact"
+                    className={`w-full h-12 px-6 rounded-xl font-semibold inline-flex items-center justify-center transition-all duration-300 bg-gradient-to-r from-blue-500 to-blue-700 text-white hover:from-blue-400 hover:to-blue-600 hover:shadow-2xl hover:scale-105`}
                   >
                     Get Started
-                  </button>
+                  </a>
                 </div>
               </div>
             </div>
