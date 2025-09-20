@@ -70,14 +70,14 @@ Content-Type: application/json
 
 {
   "profileUrl": "https://www.linkedin.com/in/urvi-joshi-7b1974228/",
-  "authId": "user_404"
+  "authId": "user_101"
 }
 
 ### 2️⃣ Check status
-GET https://543431d8fd4c.ngrok-free.app/api/audit/status/audit_1758279578569
+GET https://543431d8fd4c.ngrok-free.app/api/audit/status/audit_1758364080359
 
 ### 3️⃣ Results
-GET https://543431d8fd4c.ngrok-free.app/api/audit/results/audit_1758279578569
+GET https://543431d8fd4c.ngrok-free.app/api/audit/results/audit_1758361222438
 
 ### 4️⃣ List all
 GET https://543431d8fd4c.ngrok-free.app/api/audit/list

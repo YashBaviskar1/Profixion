@@ -1,4 +1,4 @@
-const API_BASE_URL = 'http://localhost:3001/api'
+const API_BASE_URL = 'https://543431d8fd4c.ngrok-free.app/api'
 
 /**
  * Generic API request handler
@@ -9,6 +9,7 @@ const apiRequest = async (endpoint, options = {}) => {
   const defaultOptions = {
     headers: {
       'Content-Type': 'application/json',
+      'ngrok-skip-browser-warning': 'true',
     },
   }
   
@@ -38,12 +39,13 @@ const apiRequest = async (endpoint, options = {}) => {
 /**
  * Submit a profile URL for audit
  */
-export const submitAudit = async (profileUrl) => {
+export const submitAudit = (payload) => { // <-- Accepts the whole object as 'payload'
   return apiRequest('/audit/submit', {
     method: 'POST',
-    body: JSON.stringify({ profileUrl }),
-  })
-}
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload), // <-- Correctly stringifies the flat object
+  });
+};
 
 /**
  * Get all audits

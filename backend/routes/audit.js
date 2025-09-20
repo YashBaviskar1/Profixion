@@ -120,4 +120,45 @@ router.post("/webhook", async (req, res) => {
   }
 });
 
+
+
+
+// backend/routes/audit.js
+
+// ... (existing imports and /submit, /webhook routes) ...
+
+/**
+ * @route GET /api/audit/status/:trackingId
+ * Fetches the status and report of a specific audit
+ */
+router.get("/status/:trackingId", async (req, res) => {
+  const { trackingId } = req.params;
+
+  if (!trackingId) {
+    return res.status(400).json({ success: false, msg: "Tracking ID is required" });
+  }
+
+  try {
+    const { data: audit, error } = await supabase
+      .from("audits")
+      .select("status, audit_report, profile_url")
+      .eq("tracking_id", trackingId)
+      .single();
+
+    if (error || !audit) {
+      return res.status(404).json({ success: false, msg: "Audit not found" });
+    }
+
+    res.json({ success: true, data: audit });
+  } catch (err) {
+    console.error("Status fetch error:", err);
+    res.status(500).json({ success: false, msg: "Failed to fetch audit status" });
+  }
+});
+
+
+
 export default router;
+
+
+

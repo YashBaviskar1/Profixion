@@ -1,8 +1,41 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-
+import { useParams } from 'react-router-dom'; // ✅ ADD THIS LINE
+import { getAuditStatus } from '../api';
 // Inlined components to resolve import errors
 
+const ScoreCircle = ({ score }) => {
+  const circumference = 2 * Math.PI * 52; // 2 * pi * radius
+  const offset = circumference - (score / 100) * circumference;
+
+  return (
+      <div className="relative w-40 h-40">
+          <svg className="w-full h-full" viewBox="0 0 120 120">
+              <circle className="text-gray-700" strokeWidth="10" stroke="currentColor" fill="transparent" r="52" cx="60" cy="60" />
+              <motion.circle
+                  className="text-gray-400"
+                  strokeWidth="10"
+                  strokeDasharray={circumference}
+                  strokeDashoffset={offset}
+                  strokeLinecap="round"
+                  stroke="currentColor"
+                  fill="transparent"
+                  r="52"
+                  cx="60"
+                  cy="60"
+                  transform="rotate(-90 60 60)"
+                  initial={{ strokeDashoffset: circumference }}
+                  animate={{ strokeDashoffset: offset }}
+                  transition={{ duration: 1.5, delay: 0.5, ease: "easeInOut" }}
+              />
+          </svg>
+          <div className="absolute inset-0 flex items-center justify-center">
+              <span className="text-4xl font-bold bg-gradient-to-r from-gray-300 to-gray-500 bg-clip-text text-transparent">{score}</span>
+              <span className="text-lg text-gray-400 mt-1">/100</span>
+          </div>
+      </div>
+  );
+};
 const Logo = ({ className = "" }) => {
   return (
     <div className={`flex items-center space-x-2 ${className}`}>
@@ -170,133 +203,201 @@ const LightbulbIcon = () => (
     <svg className="w-5 h-5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" /></svg>
 );
 
+// In AuditPage.jsx
+
+  // A more robust function to parse the Markdown report
+  const parseAuditReport = (markdownText) => {
+    if (!markdownText) return null;
+
+    const reportData = {
+      overallScore: 0,
+      strengths: [],
+      weaknesses: [],
+      recommendations: [],
+    };
+
+    // Extract Score
+    const scoreMatch = markdownText.match(/Overall Score:.*?(\d+)/i);
+    if (scoreMatch) {
+      reportData.overallScore = parseInt(scoreMatch[1], 10);
+    }
+
+    // This new function is better at finding the content between titles
+    const extractSection = (startTitle, endTitles) => {
+      // Create a regex to find the block of text for the section
+      const startRegex = new RegExp(`\\*\\*${startTitle}\\*\\*`, 'i');
+      const contentMatch = markdownText.split(startRegex)[1];
+      
+      if (!contentMatch) return [];
+
+      // Figure out where this section ends
+      let sectionContent = contentMatch;
+      for (const endTitle of endTitles) {
+        const endRegex = new RegExp(`\\*\\*${endTitle}\\*\\*`, 'i');
+        if (sectionContent.includes(endTitle)) {
+           sectionContent = sectionContent.split(endRegex)[0];
+        }
+      }
+
+      return sectionContent
+        .split('\n')
+        .map(item => item.trim().replace(/^[\*\-]\s*/, '')) // Remove bullets and trim
+        .filter(item => item); // Filter out empty lines
+    };
+
+    // Define the titles that mark the start and end of each section
+    reportData.strengths = extractSection('Strengths', ['Weaknesses', 'Recommendations']);
+    reportData.weaknesses = extractSection('Weaknesses', ['Strengths', 'Recommendations']);
+    reportData.recommendations = extractSection('Recommendations', ['Strengths', 'Weaknesses']);
+    
+    return reportData;
+  };
 
 // Main Audit Page Component
-const AuditPage = ({ profileUrl }) => {
+
+const AuditPage = () => {
+  const { trackingId } = useParams(); // Get trackingId from the URL
   const [status, setStatus] = useState('pending'); // 'pending', 'processing', 'completed', 'failed'
   const [report, setReport] = useState(null);
+  const [error, setError] = useState(null);
 
+  // 3. Helper function to parse the Markdown report from Gemini
+  const parseAuditReport = (markdownText) => {
+    if (!markdownText) return null;
+
+    const reportData = {
+      overallScore: 0,
+      strengths: [],
+      weaknesses: [],
+      recommendations: [],
+    };
+
+    // Extract Score
+    const scoreMatch = markdownText.match(/Overall Score:.*?(\d+)/i);
+    if (scoreMatch) {
+      reportData.overallScore = parseInt(scoreMatch[1], 10);
+    }
+
+    // Function to extract list items from a section
+    const extractSection = (title) => {
+      const regex = new RegExp(`\\*\\*${title}:\\*\\*([\\s\\S]*?)(?=\\n\\*\\*|$)`, 'i');
+      const match = markdownText.match(regex);
+      if (match && match[1]) {
+        return match[1]
+          .split('\n')
+          .map(item => item.trim().replace(/^[\*\-]\s*/, '')) // Remove bullets and trim
+          .filter(item => item); // Filter out empty lines
+      }
+      return [];
+    };
+
+    reportData.strengths = extractSection('Strengths');
+    reportData.weaknesses = extractSection('Weaknesses');
+    // Handle different possible titles for recommendations
+    reportData.recommendations = extractSection('Recommendations|Actionable Recommendations');
+    
+    return reportData;
+  };
+
+
+  // 4. useEffect to fetch and poll for the audit status
+  useEffect(() => {
+    if (!trackingId) {
+      setError("No tracking ID found in the URL.");
+      return;
+    }
+
+    const fetchStatus = async () => {
+      try {
+        const response = await getAuditStatus(trackingId);
+        const auditData = response.data;
+        
+        if (auditData.status === 'running') {
+          setStatus('processing');
+        } else if (auditData.status === 'ready') {
+          setStatus('completed');
+          // Parse the report and set it in state
+          const parsedReport = parseAuditReport(auditData.audit_report);
+          setReport({ ...parsedReport, profileUrl: auditData.profile_url });
+        }
+      } catch (err) {
+        setError('Failed to fetch audit status or audit not found.');
+        console.error(err);
+      }
+    };
+    
+    // Initial fetch
+    fetchStatus();
+
+    // Polling logic
+    const interval = setInterval(() => {
+      // Use a function form of setStatus to check the current status
+      // This prevents the interval from running with stale state
+      setStatus(currentStatus => {
+        if (currentStatus !== 'completed' && !error) {
+          fetchStatus();
+        }
+        return currentStatus;
+      });
+    }, 5000); // Poll every 5 seconds
+
+    // Cleanup interval on component unmount
+    return () => clearInterval(interval);
+  }, [trackingId, error]); // Add error to dependency array to stop polling on error
+
+
+  // Update auditSteps based on the live status
   const auditSteps = [
     { name: 'Profile Submitted', status: 'completed' },
-    { name: 'AI Analysis', status: status === 'processing' || status === 'completed' ? 'processing' : 'pending' },
+    { name: 'AI Analysis', status: (status === 'processing' || status === 'completed') ? 'completed' : 'pending' },
     { name: 'Generating Report', status: status === 'completed' ? 'completed' : 'pending' },
   ];
-
-  // Mock API calls to simulate audit progress
-  useEffect(() => {
-    // 1. Initial submission is 'pending'
-    const timer1 = setTimeout(() => {
-      setStatus('processing');
-    }, 2000); // Start processing after 2s
-
-    const timer2 = setTimeout(() => {
-      setStatus('completed');
-      setReport({
-        profileUrl: "https://www.linkedin.com/in/example-user",
-        overallScore: 87,
-        strengths: [
-            "Exceptional headline that clearly communicates value.",
-            "Consistent posting schedule with high engagement.",
-            "Profile summary is well-written and utilizes industry keywords."
-        ],
-        weaknesses: [
-            "Profile picture has a busy background.",
-            "Banner image is generic and not personalized.",
-            "Experience section lacks quantifiable achievements."
-        ],
-        recommendations: [
-            "Upload a professional headshot with a neutral background.",
-            "Design a custom banner that reflects your personal brand or services.",
-            "Update job descriptions to include specific metrics (e.g., 'Increased sales by 20%')."
-        ]
-      });
-    }, 8000); // Complete after 8s
-
-    return () => {
-      clearTimeout(timer1);
-      clearTimeout(timer2);
-    };
-  }, []);
 
   const getStatusIndicator = (stepStatus) => {
     if (stepStatus === 'completed') {
       return <div className="w-6 h-6 rounded-full bg-green-500 flex items-center justify-center"><CheckIcon /></div>;
     }
-    if (stepStatus === 'processing') {
+    if (stepStatus === 'processing' || (stepStatus === 'pending' && status === 'processing')) {
       return <div className="w-6 h-6 rounded-full bg-blue-500 flex items-center justify-center animate-spin"><div className="w-2 h-2 bg-white rounded-full"></div></div>;
     }
     return <div className="w-6 h-6 rounded-full border-2 border-gray-600"></div>;
   };
   
-  const ScoreCircle = ({ score }) => {
-    const circumference = 2 * Math.PI * 52; // 2 * pi * radius
-    const offset = circumference - (score / 100) * circumference;
-
+  if (error) {
     return (
-        <div className="relative w-40 h-40">
-            <svg className="w-full h-full" viewBox="0 0 120 120">
-                <circle className="text-gray-700" strokeWidth="10" stroke="currentColor" fill="transparent" r="52" cx="60" cy="60" />
-                <motion.circle
-                    className="text-gray-400"
-                    strokeWidth="10"
-                    strokeDasharray={circumference}
-                    strokeDashoffset={offset}
-                    strokeLinecap="round"
-                    stroke="currentColor"
-                    fill="transparent"
-                    r="52"
-                    cx="60"
-                    cy="60"
-                    transform="rotate(-90 60 60)"
-                    initial={{ strokeDashoffset: circumference }}
-                    animate={{ strokeDashoffset: offset }}
-                    transition={{ duration: 1.5, delay: 0.5, ease: "easeInOut" }}
-                />
-            </svg>
-            <div className="absolute inset-0 flex items-center justify-center">
-                <span className="text-4xl font-bold bg-gradient-to-r from-gray-300 to-gray-500 bg-clip-text text-transparent">{score}</span>
-                <span className="text-lg text-gray-400 mt-1">/100</span>
-            </div>
-        </div>
+      <div className="min-h-screen bg-black text-white flex flex-col">
+        <Navbar />
+        <main className="flex-grow flex items-center justify-center text-center px-6">
+          <h1 className="text-2xl text-red-500">{error}</h1>
+        </main>
+        <Footer />
+      </div>
     );
-};
+  }
 
-
+  // --- The rest of your JSX is almost perfect! Just a few minor tweaks. ---
   return (
     <div className="min-h-screen bg-black text-white">
       <Navbar />
       <main className="max-w-7xl mx-auto px-6 py-16 sm:py-24">
+        {/* ... Title and Subtitle section ... no changes needed */}
         <div className="text-center mb-12">
-            <motion.h1 
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5 }}
-                className="text-4xl md:text-5xl font-bold mb-4"
-            >
-              Your Audit is in Progress
-            </motion.h1>
-            <motion.p 
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 0.2 }}
-                className="text-lg text-gray-400 max-w-2xl mx-auto"
-            >
-              Our AI is analyzing your profile. This usually takes a few moments. Please don't close this page.
-            </motion.p>
+            {/* ... */}
         </div>
-
+        
         {/* Status Tracker */}
         <div className="max-w-3xl mx-auto mb-16">
             <div className="flex justify-between items-center relative">
                 <div className="absolute left-0 top-1/2 w-full h-0.5 bg-gray-700 -translate-y-1/2"></div>
-                 <div 
+                <div 
                     className="absolute left-0 top-1/2 h-0.5 bg-gradient-to-r from-gray-500 to-gray-600 -translate-y-1/2 transition-all duration-1000"
                     style={{ width: status === 'completed' ? '100%' : (status === 'processing' ? '50%' : '0%') }}
                 ></div>
                 {auditSteps.map((step, index) => (
                     <div key={index} className="relative z-10 flex flex-col items-center">
-                        {getStatusIndicator(step.status === 'completed' ? 'completed' : (index === 1 && status === 'processing' ? 'processing' : 'pending'))}
-                        <p className={`mt-2 text-sm text-center ${step.status === 'pending' && status !=='processing' ? 'text-gray-500' : 'text-gray-300'}`}>{step.name}</p>
+                        {/* 5. Simplified status indicator logic */}
+                        {getStatusIndicator(step.status)}
+                        <p className={`mt-2 text-sm text-center ${step.status === 'pending' ? 'text-gray-500' : 'text-gray-300'}`}>{step.name}</p>
                     </div>
                 ))}
             </div>
@@ -304,76 +405,64 @@ const AuditPage = ({ profileUrl }) => {
         
         {/* Content Area: Processing or Report */}
         <AnimatePresence mode="wait">
-            {status !== 'completed' ? (
-                <motion.div
-                    key="processing"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    className="text-center"
-                >
-                    <div className="inline-block relative w-16 h-16">
-                        <div className="absolute border-4 border-gray-700 rounded-full w-full h-full"></div>
-                        <motion.div 
-                            className="absolute border-4 border-t-gray-400 border-r-transparent border-b-transparent border-l-transparent rounded-full w-full h-full"
-                            animate={{ rotate: 360 }}
-                            transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                        ></motion.div>
-                    </div>
-                    <p className="mt-4 text-gray-400">Analyzing strengths, weaknesses, and opportunities...</p>
-                </motion.div>
-            ) : (
-                <motion.div
-                    key="report"
-                    initial={{ opacity: 0, y: 50 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.8, ease: "easeOut" }}
-                    className="bg-gray-900/50 border border-gray-800 rounded-2xl p-8 shadow-2xl"
-                >
-                    <div className="flex flex-col md:flex-row justify-between items-center mb-8 border-b border-gray-800 pb-6">
-                        <div>
-                            <h2 className="text-3xl font-bold text-white">Your Audit Report is Ready</h2>
-                            <p className="text-gray-400 truncate">Analysis for: {report.profileUrl}</p>
-                        </div>
-                        <button className="mt-4 md:mt-0 px-6 py-3 bg-gradient-to-r from-gray-600 to-gray-800 text-white font-semibold rounded-xl hover:shadow-lg hover:scale-105 transition-all">
-                            Download PDF Report
-                        </button>
-                    </div>
+          {/* 6. Use `report` state to check for completion */}
+          {!report ? (
+            <motion.div
+              key="processing"
+              /* ... no changes in motion div ... */
+            >
+                {/* ... processing animation ... */}
+            </motion.div>
+          ) : (
+// In AuditPage.jsx, inside the return statement
 
-                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                        {/* Left Column: Score */}
-                        <div className="lg:col-span-1 flex flex-col items-center justify-center bg-gray-900 rounded-xl p-6 border border-gray-800">
-                             <h3 className="text-xl font-semibold mb-4 text-white">Overall Profile Score</h3>
-                             <ScoreCircle score={report.overallScore} />
-                        </div>
+            <motion.div
+              key="report"
+              initial={{ opacity: 0, y: 50 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, ease: "easeOut" }}
+              className="bg-gray-900/50 border border-gray-800 rounded-2xl p-8 shadow-2xl"
+            >
+              {/* UPDATED HEADER SECTION */}
+              <div className="flex flex-col md:flex-row justify-between items-center mb-8 border-b border-gray-800 pb-6 gap-6">
+                {/* Left side: Title and URL */}
+                <div className="flex-grow">
+                  <h2 className="text-3xl font-bold text-white">Your Audit Report is Ready</h2>
+                  <p className="text-gray-400 truncate">Analysis for: {report.profileUrl}</p>
+                </div>
+                {/* Right side: ScoreCircle */}
+                <div className="flex flex-col items-center">
+                    <h3 className="text-xl font-semibold mb-2 text-white">Overall Score</h3>
+                    <ScoreCircle score={report.overallScore} />
+                </div>
+              </div>
 
-                        {/* Right Column: Details */}
-                        <div className="lg:col-span-2 space-y-6">
-                            {/* Strengths */}
-                            <div>
-                                <h3 className="flex items-center text-xl font-semibold mb-3 text-white"><CheckIcon /><span className="ml-2">Strengths</span></h3>
-                                <ul className="space-y-2 list-inside text-gray-300">
-                                    {report.strengths.map((item, i) => <li key={i} className="bg-gray-800/50 p-3 rounded-md">{item}</li>)}
-                                </ul>
-                            </div>
-                             {/* Weaknesses */}
-                             <div>
-                                <h3 className="flex items-center text-xl font-semibold mb-3 text-white"><ExclamationIcon /><span className="ml-2">Areas for Improvement</span></h3>
-                                <ul className="space-y-2 list-inside text-gray-300">
-                                    {report.weaknesses.map((item, i) => <li key={i} className="bg-gray-800/50 p-3 rounded-md">{item}</li>)}
-                                </ul>
-                            </div>
-                             {/* Recommendations */}
-                             <div>
-                                <h3 className="flex items-center text-xl font-semibold mb-3 text-white"><LightbulbIcon /><span className="ml-2">Actionable Recommendations</span></h3>
-                                <ul className="space-y-2 list-inside text-gray-300">
-                                    {report.recommendations.map((item, i) => <li key={i} className="bg-gray-800/50 p-3 rounded-md">{item}</li>)}
-                                </ul>
-                            </div>
-                        </div>
-                    </div>
-                </motion.div>
-            )}
+              {/* UPDATED CONTENT SECTION */}
+              <div className="space-y-8">
+                {/* Strengths */}
+                <div>
+                  <h3 className="flex items-center text-xl font-semibold mb-3 text-white"><CheckIcon /><span className="ml-2">Strengths</span></h3>
+                  <ul className="space-y-2 list-inside text-gray-300">
+                    {report.strengths.map((item, i) => <li key={i} className="bg-gray-800/50 p-3 rounded-md">{item}</li>)}
+                  </ul>
+                </div>
+                {/* Weaknesses */}
+                <div>
+                  <h3 className="flex items-center text-xl font-semibold mb-3 text-white"><ExclamationIcon /><span className="ml-2">Areas for Improvement</span></h3>
+                  <ul className="space-y-2 list-inside text-gray-300">
+                    {report.weaknesses.map((item, i) => <li key={i} className="bg-gray-800/50 p-3 rounded-md">{item}</li>)}
+                  </ul>
+                </div>
+                {/* Recommendations */}
+                <div>
+                  <h3 className="flex items-center text-xl font-semibold mb-3 text-white"><LightbulbIcon /><span className="ml-2">Actionable Recommendations</span></h3>
+                  <ul className="space-y-2 list-inside text-gray-300">
+                    {report.recommendations.map((item, i) => <li key={i} className="bg-gray-800/50 p-3 rounded-md">{item}</li>)}
+                  </ul>
+                </div>
+              </div>
+            </motion.div>
+          )}
         </AnimatePresence>
       </main>
       <Footer />
@@ -382,4 +471,3 @@ const AuditPage = ({ profileUrl }) => {
 };
 
 export default AuditPage;
-

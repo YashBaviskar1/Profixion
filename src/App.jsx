@@ -10,7 +10,7 @@ function App() {
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<LandingPage />} />
-        <Route path="/audit" element={<AuditPage />} />
+        <Route path="/audit/:trackingId" element={<AuditPage />} />
         <Route path="/dashboard" element={<Dashboard />} />
       </Routes>
       <Toaster 
