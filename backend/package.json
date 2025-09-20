@@ -17,10 +17,12 @@
   "author": "Jitesh More",
   "license": "ISC",
   "dependencies": {
+    "@google/genai": "^1.19.0",
     "@supabase/supabase-js": "^2.57.0",
     "cors": "^2.8.5",
     "dotenv": "^16.6.1",
-    "express": "^4.18.2"
+    "express": "^4.18.2",
+    "razorpay": "^2.9.6"
   },
   "devDependencies": {
     "nodemon": "^2.0.22"

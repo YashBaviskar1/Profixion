@@ -1,131 +1,117 @@
-import { Router } from 'express';
-import supabase from '../supabaseClient.js';
+import { Router } from "express";
+import supabase from "../supabaseClient.js";
+import { triggerBrightDataIngestion, fetchBrightDataSnapshot } from "../brightdataClient.js";
+import { analyzeWithGemini } from "../geminiClient.js";
 
 const router = Router();
 
 /**
- * @route   POST /api/audit/submit
+ * @route POST /api/audit/submit
+ * Body: { profileUrl, authId }
  */
-router.post('/submit', async (req, res) => {
-  const { profileUrl } = req.body;
+router.post("/submit", async (req, res) => {
+  const { profileUrl, authId } = req.body;
 
-  if (!profileUrl) {
-    return res.status(400).json({ msg: 'Please provide a profile URL' });
+  if (!profileUrl || !authId) {
+    return res.status(400).json({ msg: "profileUrl and authId are required" });
   }
 
-  const trackingId = `audit_${Date.now()}`;
-
-  // Insert into Supabase
-  const { data, error } = await supabase
-    .from('audits')
-    .insert([
-      { tracking_id: trackingId, profile_url: profileUrl, status: 'pending' }
-    ])
-    .select();
-
-  if (error) {
-    console.error(error);
-    return res.status(500).json({ success: false, msg: 'Database insert failed' });
-  }
-
-  res.json({
-    success: true,
-    message: 'Profile submitted for audit successfully.',
-    data: { trackingId }
-  });
-});
-
-/**
- * @route   GET /api/audit/status/:trackingId
- */
-router.get('/status/:trackingId', async (req, res) => {
-  const { trackingId } = req.params;
-
-  const { data, error } = await supabase
-    .from('audits')
-    .select('tracking_id, status')
-    .eq('tracking_id', trackingId)
-    .single();
-
-  if (error || !data) {
-    return res.status(404).json({ success: false, msg: 'Audit not found' });
-  }
-
-  res.json({
-    success: true,
-    data: {
-      trackingId: data.tracking_id,
-      status: data.status,
-      message: `Audit is currently ${data.status}.`
-    }
-  });
-});
-
-/**
- * @route   GET /api/audit/list
- */
-router.get('/list', async (req, res) => {
   try {
-    const { data, error } = await supabase
-      .from('audits')
-      .select('tracking_id, profile_url, status, created_at')
-      .order('created_at', { ascending: false });
+    // 1️⃣ Check if the same user already has this profile audited
+    const { data: existing } = await supabase
+      .from("audits")
+      .select("*")
+      .eq("auth_id", authId)
+      .eq("profile_url", profileUrl)
+      .single();
 
-    if (error) {
-      console.error('Error fetching audits:', error);
-      return res.status(500).json({ success: false, msg: 'Failed to fetch audits' });
+    if (existing) {
+      return res.json({
+        success: true,
+        message: "Audit already exists for this profile",
+        data: { trackingId: existing.tracking_id, status: existing.status }
+      });
     }
+
+    // 2️⃣ Trigger Bright Data ingestion
+    const brightDataResponse = await triggerBrightDataIngestion(profileUrl);
+    console.log("BrightData trigger response:", brightDataResponse);
+    const trackingId = `audit_${Date.now()}`;
+
+    // 3️⃣ Insert new audit row with initial status
+    const { data, error } = await supabase
+      .from("audits")
+      .insert([{
+        tracking_id: trackingId,
+        auth_id: authId,
+        profile_url: profileUrl,
+        status: "running",
+        snapshot_id: brightDataResponse?.snapshot_id || "", // ✅ save snapshot_id instead
+        snapshot_id: "",
+        audit_report: ""
+      }])
+      .select();
+
+    if (error) throw error;
 
     res.json({
       success: true,
-      data: data || []
+      message: "Audit started successfully",
+      data: { trackingId }
     });
-  } catch (error) {
-    console.error('Unexpected error:', error);
-    res.status(500).json({ success: false, msg: 'Internal server error' });
+  } catch (err) {
+    console.error("Submit error:", err);
+    res.status(500).json({ success: false, msg: "Audit submission failed" });
   }
 });
 
 /**
- * @route   GET /api/audit/results/:trackingId
+ * @route POST /api/audit/webhook
+ * Bright Data calls this when job is ready
  */
-router.get('/results/:trackingId', async (req, res) => {
-  const { trackingId } = req.params;
+router.post("/webhook", async (req, res) => {
+  try {
+    const { snapshot_id, status } = req.body;
+    console.log("Webhook received:", req.body);
 
-  // For now, just fetch from Supabase and return dummy results
-  const { data, error } = await supabase
-    .from('audits')
-    .select('*')
-    .eq('tracking_id', trackingId)
-    .single();
+    if (status !== "ready") {
+      return res.json({ success: true, msg: "Ignored non-ready status" });
+    }
 
-  if (error || !data) {
-    return res.status(404).json({ success: false, msg: 'Audit not found' });
+    // Check if already processed
+    const { data: existing } = await supabase
+      .from("audits")
+      .select("status")
+      .eq("snapshot_id", snapshot_id) // ✅ match snapshot_id now
+      .single();
+
+    if (existing?.status === "ready") {
+      console.log(`⚠️ Duplicate webhook for snapshot ${snapshot_id}, ignoring.`);
+      return res.json({ success: true, msg: "Already processed" });
+    }
+
+    // Fetch snapshot
+    const snapshot = await fetchBrightDataSnapshot(snapshot_id);
+
+    // Analyze with Gemini
+    const report = await analyzeWithGemini(snapshot);
+
+    // Update audit record
+    await supabase
+      .from("audits")
+      .update({
+        status: "ready",
+        snapshot_id,
+        audit_report: report
+      })
+      .eq("snapshot_id", snapshot_id);
+
+    console.log(`✅ Audit for snapshot ${snapshot_id} completed via webhook`);
+    res.json({ success: true });
+  } catch (err) {
+    console.error("Webhook error:", err);
+    res.status(500).json({ success: false });
   }
-
-  const reportData = {
-    profileUrl: data.profile_url,
-    overallScore: 85,
-    strengths: [
-      "Strong headline and summary.",
-      "Consistent activity and engagement.",
-      "Well-defined work experience."
-    ],
-    weaknesses: [
-      "Profile picture could be more professional.",
-      "Missing a banner image."
-    ],
-    recommendations: [
-      "Upload a high-resolution headshot.",
-      "Create a custom banner that reflects your personal brand.",
-      "Add more skills to your profile."
-    ]
-  };
-
-  res.json({
-    success: true,
-    data: reportData
-  });
 });
 
 export default router;
