@@ -1,4 +1,9 @@
+import { useState } from 'react'
+import PaymentButton from './PaymentButton'
+import CTA from './CTA'
+
 export default function Pricing() {
+  const [showModal, setShowModal] = useState(false)
   const plans = [
     {
       name: "Single Platform",
@@ -99,13 +104,13 @@ export default function Pricing() {
                 </div>
 
                 {/* Footer */}
-                <div className="mt-8">
-                  <a
-                    href="#contact"
-                    className={`w-full h-12 px-6 rounded-xl font-semibold inline-flex items-center justify-center transition-all duration-300 bg-gradient-to-r from-blue-500 to-blue-700 text-white hover:from-blue-400 hover:to-blue-600 hover:shadow-2xl hover:scale-105`}
-                  >
-                    Get Started
-                  </a>
+                <div className="mt-8 flex justify-center">
+                  <PaymentButton
+                    amount={plan.price === "₹299" ? 299 : 999}
+                    onSuccess={() => {
+                      setShowModal(true)
+                    }}
+                  />
                 </div>
               </div>
             </div>
@@ -118,6 +123,26 @@ export default function Pricing() {
             Need help choosing? Contact us →
           </a>
         </div>
+
+        {showModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4">
+            <div className="w-full max-w-2xl bg-gray-900 border border-gray-700 rounded-2xl shadow-2xl overflow-hidden">
+              <div className="flex items-center justify-between px-6 py-4 border-b border-gray-700">
+                <h3 className="text-white text-lg font-semibold">Enter your LinkedIn URL</h3>
+                <button
+                  onClick={() => setShowModal(false)}
+                  className="text-gray-400 hover:text-white"
+                  aria-label="Close"
+                >
+                  ✕
+                </button>
+              </div>
+              <div className="p-6">
+                <CTA />
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </section>
   )

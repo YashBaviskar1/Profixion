@@ -26,7 +26,7 @@ export default function Footer() {
                   </svg>
                 </a>
                 <a 
-                  href="#" 
+                  href="https://www.linkedin.com/in/profixion-ai-825207384" 
                   target="_blank" 
                   rel="noopener noreferrer"
                   className="text-gray-400 hover:text-white transition-colors"
@@ -39,11 +39,13 @@ export default function Footer() {
               </div>
             </div>
             
-            {/* Company */}
-            <div>
-              <h4 className="text-white font-semibold mb-3 sm:mb-4">Company</h4>
+            {/* About */}
+            <div className="mt-2">
+              <h4 className="text-white font-semibold mb-3 sm:mb-4">About</h4>
+              <p className="text-gray-400 text-sm sm:text-base leading-7 sm:leading-8 mb-3 max-w-xs">
+                At <strong className="text-gray-200">Profixion</strong>, we specialize in transforming first impressions. Our <strong className="text-gray-200">AI-powered</strong> audit system gives you instant scores and personalized recommendations to polish your social profiles — so you stand out online.
+              </p>
               <ul className="space-y-2 text-sm sm:text-base">
-                <li><a href="#" className="hover:text-white transition-colors">About</a></li>
                 <li><a href="#" className="hover:text-white transition-colors">Contact</a></li>
               </ul>
             </div>

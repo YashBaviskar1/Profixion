@@ -2,6 +2,8 @@ import { Router } from "express";
 import supabase from "../supabaseClient.js";
 import { triggerBrightDataIngestion } from "../brightdataClient.js";
 import { analyzeWithGemini } from "../geminiClient.js";
+import { generateAuditPDF, parseAuditData } from "../utils/pdfGenerator.js";
+import path from "path";
 
 const router = Router();
 
@@ -156,7 +158,102 @@ router.get("/status/:trackingId", async (req, res) => {
   }
 });
 
+/**
+ * @route POST /api/audit/generate-pdf
+ * Generates a PDF report for a completed audit
+ * Body: { trackingId }
+ */
+router.post("/generate-pdf", async (req, res) => {
+  const { trackingId } = req.body;
 
+  if (!trackingId) {
+    return res.status(400).json({ success: false, msg: "Tracking ID is required" });
+  }
+
+  try {
+    // 1️⃣ Fetch the audit data from Supabase
+    const { data: audit, error } = await supabase
+      .from("audits")
+      .select("status, audit_report, profile_url, tracking_id")
+      .eq("tracking_id", trackingId)
+      .single();
+
+    if (error || !audit) {
+      return res.status(404).json({ success: false, msg: "Audit not found" });
+    }
+
+    if (audit.status !== "ready") {
+      return res.status(400).json({ 
+        success: false, 
+        msg: "Audit is not ready yet. Please wait for the analysis to complete." 
+      });
+    }
+
+    // 2️⃣ Parse the audit report into structured data
+    const auditData = parseAuditData(audit.audit_report, audit.profile_url);
+    
+    // 3️⃣ Generate PDF filename
+    const filename = `audit_report_${trackingId}_${Date.now()}`;
+    
+    // 4️⃣ Generate the PDF
+    console.log(`📄 Generating PDF for audit: ${trackingId}`);
+    const pdfPath = await generateAuditPDF(auditData, filename);
+    
+    // 5️⃣ Return the download URL
+    const baseUrl = process.env.PUBLIC_URL || 'http://localhost:3001';
+    const downloadUrl = `${baseUrl}/api/audit/download-pdf/${filename}.pdf`;
+    
+    res.json({
+      success: true,
+      message: "PDF generated successfully",
+      data: {
+        downloadUrl,
+        filename: `${filename}.pdf`,
+        trackingId
+      }
+    });
+
+  } catch (err) {
+    console.error("PDF generation error:", err);
+    res.status(500).json({ 
+      success: false, 
+      msg: "Failed to generate PDF report" 
+    });
+  }
+});
+
+/**
+ * @route GET /api/audit/download-pdf/:filename
+ * Serves the generated PDF file for download
+ */
+router.get("/download-pdf/:filename", async (req, res) => {
+  const { filename } = req.params;
+  
+  if (!filename || !filename.endsWith('.pdf')) {
+    return res.status(400).json({ success: false, msg: "Invalid filename" });
+  }
+
+  try {
+    const pdfPath = path.join(process.cwd(), 'reports', filename);
+    
+    // Check if file exists
+    const fs = await import('fs');
+    if (!fs.existsSync(pdfPath)) {
+      return res.status(404).json({ success: false, msg: "PDF file not found" });
+    }
+
+    // Set headers for PDF download
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    
+    // Send the file
+    res.sendFile(pdfPath);
+
+  } catch (err) {
+    console.error("PDF download error:", err);
+    res.status(500).json({ success: false, msg: "Failed to download PDF" });
+  }
+});
 
 export default router;
 

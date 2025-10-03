@@ -1,4 +1,4 @@
-const API_BASE_URL = 'https://543431d8fd4c.ngrok-free.app/api'
+import API_BASE_URL from './config'
 
 /**
  * Generic API request handler
@@ -66,4 +66,46 @@ export const getAuditStatus = async (trackingId) => {
  */
 export const getAuditResults = async (trackingId) => {
   return apiRequest(`/audit/results/${trackingId}`)
+}
+
+/**
+ * Generate PDF report for an audit
+ */
+export const generateAuditPDF = async (trackingId) => {
+  return apiRequest('/audit/generate-pdf', {
+    method: 'POST',
+    body: JSON.stringify({ trackingId })
+  })
+}
+
+/**
+ * Download PDF file
+ */
+export const downloadPDF = async (downloadUrl, filename) => {
+  try {
+    const response = await fetch(downloadUrl, {
+      headers: {
+        'ngrok-skip-browser-warning': 'true'
+      }
+    })
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`)
+    }
+    
+    const blob = await response.blob()
+    const url = window.URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = filename || 'audit_report.pdf'
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    window.URL.revokeObjectURL(url)
+    
+    return { success: true }
+  } catch (error) {
+    console.error('PDF download failed:', error)
+    throw error
+  }
 }

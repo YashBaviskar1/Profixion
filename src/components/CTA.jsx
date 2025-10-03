@@ -11,9 +11,15 @@ export default function CTA() {
   const [profile, setProfile] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate(); // 2. Initialize the navigate function
+  const hasPaid = (() => { try { return localStorage.getItem('auditPaid') === '1'; } catch { return false; } })();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    if (!hasPaid) {
+      toast.error("Please complete payment to start the audit.");
+      return;
+    }
 
     // 3. Validate the URL before submitting
     const linkedinRegex = /^(https?:\/\/)?(www\.)?linkedin\.com\/(in|pub)\/[a-zA-Z0-9_-]+\/?$/;
@@ -45,6 +51,7 @@ export default function CTA() {
       toast.error(error.message || 'Failed to submit audit.');
     } finally {
       setIsLoading(false);
+      try { localStorage.removeItem('auditPaid'); } catch {}
     }
   };
 
@@ -72,7 +79,7 @@ export default function CTA() {
             </div>
             <button
               type="submit"
-              disabled={isLoading}
+              disabled={isLoading || !hasPaid}
               className="px-8 py-4 cta-gradient-animate text-white font-semibold rounded-xl hover:shadow-2xl hover:scale-105 transition-all duration-300 whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
             >
               {isLoading ? (
@@ -81,7 +88,7 @@ export default function CTA() {
                   Submitting...
                 </>
               ) : (
-                'Start Audit'
+                hasPaid ? 'Start Audit' : 'Complete Payment to Continue'
               )}
             </button>
             {/* We removed the PaymentButton to redirect instead */}

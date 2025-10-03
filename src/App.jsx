@@ -2,8 +2,10 @@ import React from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { Toaster } from "react-hot-toast";
 import LandingPage from "./pages/LandingPage";
+import About from "./pages/About";
 import AuditPage from "./pages/AuditPage";
 import Dashboard from "./pages/Dashboard";
+import StartAudit from "./pages/StartAudit";
 
 function App() {
   return (
@@ -11,7 +13,9 @@ function App() {
       <Routes>
         <Route path="/" element={<LandingPage />} />
         <Route path="/audit/:trackingId" element={<AuditPage />} />
+        <Route path="/start-audit" element={<StartAudit />} />
         <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/about" element={<About />} />
       </Routes>
       <Toaster 
         position="top-right"

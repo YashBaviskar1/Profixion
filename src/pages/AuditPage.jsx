@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useParams } from 'react-router-dom'; // ✅ ADD THIS LINE
-import { getAuditStatus } from '../api';
+import { getAuditStatus, generateAuditPDF, downloadPDF } from '../api';
 // Inlined components to resolve import errors
 
 const ScoreCircle = ({ score }) => {
@@ -260,6 +260,7 @@ const AuditPage = () => {
   const [status, setStatus] = useState('pending'); // 'pending', 'processing', 'completed', 'failed'
   const [report, setReport] = useState(null);
   const [error, setError] = useState(null);
+  const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
 
   // 3. Helper function to parse the Markdown report from Gemini
   const parseAuditReport = (markdownText) => {
@@ -345,6 +346,31 @@ const AuditPage = () => {
     return () => clearInterval(interval);
   }, [trackingId, error]); // Add error to dependency array to stop polling on error
 
+  // PDF Download Handler
+  const handleDownloadPDF = async () => {
+    if (!trackingId) return;
+    
+    try {
+      setIsGeneratingPDF(true);
+      console.log('📄 Generating PDF for audit:', trackingId);
+      
+      // Generate PDF
+      const response = await generateAuditPDF(trackingId);
+      
+      if (response.success) {
+        // Download the PDF
+        await downloadPDF(response.data.downloadUrl, response.data.filename);
+        console.log('✅ PDF downloaded successfully');
+      } else {
+        throw new Error(response.msg || 'Failed to generate PDF');
+      }
+    } catch (err) {
+      console.error('❌ PDF generation failed:', err);
+      alert(`Failed to generate PDF: ${err.message}`);
+    } finally {
+      setIsGeneratingPDF(false);
+    }
+  };
 
   // Update auditSteps based on the live status
   const auditSteps = [
@@ -430,10 +456,35 @@ const AuditPage = () => {
                   <h2 className="text-3xl font-bold text-white">Your Audit Report is Ready</h2>
                   <p className="text-gray-400 truncate">Analysis for: {report.profileUrl}</p>
                 </div>
-                {/* Right side: ScoreCircle */}
-                <div className="flex flex-col items-center">
-                    <h3 className="text-xl font-semibold mb-2 text-white">Overall Score</h3>
-                    <ScoreCircle score={report.overallScore} />
+                {/* Right side: ScoreCircle and PDF Button */}
+                <div className="flex flex-col items-center gap-4">
+                    <div className="flex flex-col items-center">
+                        <h3 className="text-xl font-semibold mb-2 text-white">Overall Score</h3>
+                        <ScoreCircle score={report.overallScore} />
+                    </div>
+                    {/* PDF Download Button */}
+                    <motion.button
+                      onClick={handleDownloadPDF}
+                      disabled={isGeneratingPDF}
+                      className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 disabled:from-gray-600 disabled:to-gray-700 text-white font-medium rounded-lg transition-all duration-200 shadow-lg hover:shadow-xl disabled:cursor-not-allowed"
+                      whileHover={{ scale: isGeneratingPDF ? 1 : 1.05 }}
+                      whileTap={{ scale: isGeneratingPDF ? 1 : 0.95 }}
+                      transition={{ duration: 0.2 }}
+                    >
+                      {isGeneratingPDF ? (
+                        <>
+                          <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                          <span>Generating PDF...</span>
+                        </>
+                      ) : (
+                        <>
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                          </svg>
+                          <span>Download Report (PDF)</span>
+                        </>
+                      )}
+                    </motion.button>
                 </div>
               </div>
 
