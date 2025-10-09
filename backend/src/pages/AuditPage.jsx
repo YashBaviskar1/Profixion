@@ -2,8 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useParams } from 'react-router-dom'; // ✅ ADD THIS LINE
 import { getAuditStatus, generateAuditPDF, downloadPDF } from '../api';
-import ReactMarkdown from 'react-markdown';
 // Inlined components to resolve import errors
+
 const ScoreCircle = ({ score }) => {
   const circumference = 2 * Math.PI * 52; // 2 * pi * radius
   const offset = circumference - (score / 100) * circumference;
@@ -206,6 +206,52 @@ const LightbulbIcon = () => (
 // In AuditPage.jsx
 
   // A more robust function to parse the Markdown report
+  const parseAuditReport = (markdownText) => {
+    if (!markdownText) return null;
+
+    const reportData = {
+      overallScore: 0,
+      strengths: [],
+      weaknesses: [],
+      recommendations: [],
+    };
+
+    // Extract Score
+    const scoreMatch = markdownText.match(/Overall Score:.*?(\d+)/i);
+    if (scoreMatch) {
+      reportData.overallScore = parseInt(scoreMatch[1], 10);
+    }
+
+    // This new function is better at finding the content between titles
+    const extractSection = (startTitle, endTitles) => {
+      // Create a regex to find the block of text for the section
+      const startRegex = new RegExp(`\\*\\*${startTitle}\\*\\*`, 'i');
+      const contentMatch = markdownText.split(startRegex)[1];
+      
+      if (!contentMatch) return [];
+
+      // Figure out where this section ends
+      let sectionContent = contentMatch;
+      for (const endTitle of endTitles) {
+        const endRegex = new RegExp(`\\*\\*${endTitle}\\*\\*`, 'i');
+        if (sectionContent.includes(endTitle)) {
+           sectionContent = sectionContent.split(endRegex)[0];
+        }
+      }
+
+      return sectionContent
+        .split('\n')
+        .map(item => item.trim().replace(/^[\*\-]\s*/, '')) // Remove bullets and trim
+        .filter(item => item); // Filter out empty lines
+    };
+
+    // Define the titles that mark the start and end of each section
+    reportData.strengths = extractSection('Strengths', ['Weaknesses', 'Recommendations']);
+    reportData.weaknesses = extractSection('Weaknesses', ['Strengths', 'Recommendations']);
+    reportData.recommendations = extractSection('Recommendations', ['Strengths', 'Weaknesses']);
+    
+    return reportData;
+  };
 
 // Main Audit Page Component
 
@@ -249,7 +295,8 @@ const AuditPage = () => {
     reportData.strengths = extractSection('Strengths');
     reportData.weaknesses = extractSection('Weaknesses');
     // Handle different possible titles for recommendations
-    reportData.recommendations = extractSection('Recommendations');
+    reportData.recommendations = extractSection('Recommendations|Actionable Recommendations');
+    
     return reportData;
   };
 
@@ -265,7 +312,7 @@ const AuditPage = () => {
       try {
         const response = await getAuditStatus(trackingId);
         const auditData = response.data;
-        console.log(auditData)
+        
         if (auditData.status === 'running') {
           setStatus('processing');
         } else if (auditData.status === 'ready') {
@@ -444,29 +491,26 @@ const AuditPage = () => {
               {/* UPDATED CONTENT SECTION */}
               <div className="space-y-8">
                 {/* Strengths */}
-
                 <div>
-
                   <h3 className="flex items-center text-xl font-semibold mb-3 text-white"><CheckIcon /><span className="ml-2">Strengths</span></h3>
                   <ul className="space-y-2 list-inside text-gray-300">
-                    {report.strengths.map((item, i) => <li key={i} className="bg-gray-800/50 p-3 rounded-md"> <ReactMarkdown>{item}</ReactMarkdown></li>)}
+                    {report.strengths.map((item, i) => <li key={i} className="bg-gray-800/50 p-3 rounded-md">{item}</li>)}
                   </ul>
                 </div>
                 {/* Weaknesses */}
                 <div>
                   <h3 className="flex items-center text-xl font-semibold mb-3 text-white"><ExclamationIcon /><span className="ml-2">Areas for Improvement</span></h3>
                   <ul className="space-y-2 list-inside text-gray-300">
-                    {report.weaknesses.map((item, i) => <li key={i} className="bg-gray-800/50 p-3 rounded-md"> <ReactMarkdown>{item}</ReactMarkdown></li>)}
+                    {report.weaknesses.map((item, i) => <li key={i} className="bg-gray-800/50 p-3 rounded-md">{item}</li>)}
                   </ul>
                 </div>
                 {/* Recommendations */}
                 <div>
                   <h3 className="flex items-center text-xl font-semibold mb-3 text-white"><LightbulbIcon /><span className="ml-2">Actionable Recommendations</span></h3>
                   <ul className="space-y-2 list-inside text-gray-300">
-                    {report.recommendations.map((item, i) => <li key={i} className="bg-gray-800/50 p-3 rounded-md"> <ReactMarkdown>{item}</ReactMarkdown></li>)}
+                    {report.recommendations.map((item, i) => <li key={i} className="bg-gray-800/50 p-3 rounded-md">{item}</li>)}
                   </ul>
                 </div>
-
               </div>
             </motion.div>
           )}

@@ -9,9 +9,9 @@ export async function analyzeWithGemini(snapshotJson) {
     const prompt = `
     Analyze this LinkedIn profile JSON and generate an audit report with:
     - Overall score : (0-100)
-    - Strengths (bullet list)
-    - Weaknesses (bullet list)
-    - Recommendations (bullet list)
+    - Strengths (bullet list) (3 POINTS ONLY)
+    - Weaknesses (bullet list) (2 POINTS ONLY -> focus on SKILLS, HEADLINE, GENERAL)
+    - Recommendations (bullet list) (2 POINTS ONLY-> ACTIONABLE )
     
     Profile JSON:
     ${JSON.stringify(snapshotJson, null, 2)}

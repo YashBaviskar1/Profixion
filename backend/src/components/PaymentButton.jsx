@@ -42,7 +42,6 @@ export default function PaymentButton({ amount = 499, trackingId, onSuccess, pre
         name: "Profixion",
         description: "Audit Payment",
         order_id: order.id,
-        redirect : false,
         handler: async function (response) {
           try {
             const result = await verifyPayment({
