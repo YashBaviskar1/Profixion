@@ -2,20 +2,20 @@ export default function HowItWorks() {
     const steps = [
       {
         number: "01",
-        title: "Enter your profile link",
-        desc: "Simply paste your LinkedIn, Instagram, or Twitter profile URL",
+        title: "Enter your LinkedIn profile",
+        desc: "Simply paste your LinkedIn profile URL for comprehensive analysis",
         icon: "🔗"
       },
       {
         number: "02", 
-        title: "AI analyzes your profile",
-        desc: "Our advanced AI scans your profile and evaluates your online presence",
+        title: "AI analyzes your LinkedIn",
+        desc: "Our advanced AI scans your LinkedIn profile, headline, summary, experience, and skills",
         icon: "🤖"
       },
       {
         number: "03",
-        title: "Get instant insights",
-        desc: "Receive detailed analysis with actionable tips to improve your profile",
+        title: "Get professional insights",
+        desc: "Receive detailed LinkedIn optimization report with actionable tips to boost your professional presence",
         icon: "📊"
       }
     ]
@@ -27,11 +27,11 @@ export default function HowItWorks() {
               🚀 How It Works
             </span>
             <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">
-              Get your audit in
+              Get your LinkedIn audit in
               <span className="bg-gradient-to-r from-gray-400 to-gray-600 bg-clip-text text-transparent"> 3 simple steps</span>
             </h2>
             <p className="text-xl text-gray-400 max-w-3xl mx-auto">
-              Our streamlined process makes it easy to get professional insights about your social media presence.
+              Our streamlined process makes it easy to get professional insights about your LinkedIn profile.
             </p>
           </div>
           

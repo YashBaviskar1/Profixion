@@ -1,20 +1,20 @@
 export default function Features() {
     const features = [
       { 
-        title: "AI Analysis", 
-        desc: "Get AI-driven insights on your LinkedIn, Instagram, Twitter profiles with advanced machine learning algorithms.",
+        title: "AI-Powered LinkedIn Analysis", 
+        desc: "Advanced AI analyzes your LinkedIn profile, headline, summary, experience, skills, and connections to provide comprehensive insights.",
         icon: "🤖",
         gradient: "from-gray-600 to-gray-800"
       },
       { 
-        title: "Actionable Tips", 
-        desc: "Improve profile strength with personalized suggestions and step-by-step improvement guides.",
+        title: "Professional Optimization Tips", 
+        desc: "Get personalized recommendations to improve your LinkedIn profile strength, visibility, and professional credibility.",
         icon: "💡",
         gradient: "from-gray-700 to-gray-900"
       },
       { 
-        title: "Score System", 
-        desc: "Benchmark your credibility score against industry standards and track your progress over time.",
+        title: "LinkedIn Profile Score", 
+        desc: "Get a detailed score out of 100 with specific breakdowns of your profile sections and industry benchmarking.",
         icon: "📊",
         gradient: "from-gray-800 to-gray-600"
       },
@@ -28,10 +28,10 @@ export default function Features() {
             </span>
             <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">
               Everything you need to
-              <span className="bg-gradient-to-r from-gray-400 to-gray-600 bg-clip-text text-transparent"> boost your profile</span>
+              <span className="bg-gradient-to-r from-gray-400 to-gray-600 bg-clip-text text-transparent"> optimize your LinkedIn</span>
             </h2>
             <p className="text-xl text-gray-400 max-w-3xl mx-auto">
-              Our AI-powered platform analyzes your social media presence and provides actionable insights to help you stand out.
+              Our AI-powered platform analyzes your LinkedIn profile and provides actionable insights to help you stand out professionally.
             </p>
           </div>
           

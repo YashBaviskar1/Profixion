@@ -61,8 +61,8 @@ export default function CTA() {
       <div className="relative z-10 max-w-4xl mx-auto text-center">
         {/* ... */}
         <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">
-          Ready to boost your
-          <span className="bg-gradient-to-r from-gray-300 to-gray-500 bg-clip-text text-transparent"> social presence?</span>
+          Ready to optimize your
+          <span className="bg-gradient-to-r from-gray-300 to-gray-500 bg-clip-text text-transparent"> LinkedIn profile?</span>
         </h2>
         {/* ... */}
         <form onSubmit={handleSubmit} className="max-w-2xl mx-auto">

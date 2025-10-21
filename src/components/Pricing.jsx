@@ -6,30 +6,22 @@ export default function Pricing() {
   const [showModal, setShowModal] = useState(false)
   const plans = [
     {
-      name: "Single Platform",
-      badge: "Starter",
-      price: "₹299",
-      period: "month",
-      description: "AI-powered audit for 1 platform",
+      name: "LinkedIn Profile Audit",
+      badge: "Professional",
+      price: "₹99",
+      period: "one-time",
+      description: "Comprehensive AI-powered LinkedIn profile analysis",
       features: [
-        "AI-powered audit for 1 platform",
-        "Basic reports",
-        "Email support",
-      ],
-      popular: false,
-      gradient: "from-gray-600 to-gray-700",
-    },
-    {
-      name: "All Platforms",
-      badge: "Best value",
-      price: "₹999",
-      period: "month",
-      description: "Audit across all platforms",
-      features: [
-        "Audit across all platforms",
-        "Advanced AI insights",
-        "Priority support",
-        "Custom recommendations",
+        "Complete LinkedIn profile analysis",
+        "AI-powered headline optimization",
+        "Summary & experience review",
+        "Skills gap identification",
+        "Connection strategy insights",
+        "Professional photo assessment",
+        "Industry benchmarking",
+        "Actionable improvement plan",
+        "Detailed PDF report",
+        "Priority email support",
       ],
       popular: true,
       gradient: "from-gray-500 to-gray-700",
@@ -44,15 +36,15 @@ export default function Pricing() {
             💰 Pricing
           </span>
           <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">
-            Choose the perfect plan for
-            <span className="bg-gradient-to-r from-gray-400 to-gray-600 bg-clip-text text-transparent"> your needs</span>
+            Professional LinkedIn
+            <span className="bg-gradient-to-r from-gray-400 to-gray-600 bg-clip-text text-transparent"> Profile Audit</span>
           </h2>
           <p className="text-xl text-gray-400 max-w-3xl mx-auto">
-            Start with a single platform or unlock audits across all platforms — both include our AI analysis.
+            Get a comprehensive AI-powered analysis of your LinkedIn profile with actionable insights to boost your professional presence.
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-stretch">
+        <div className="grid grid-cols-1 max-w-2xl mx-auto">
           {plans.map((plan, i) => (
             <div key={i} className={`relative group`}>
               <div
@@ -106,7 +98,7 @@ export default function Pricing() {
                 {/* Footer */}
                 <div className="mt-8 flex justify-center">
                   <PaymentButton
-                    amount={plan.price === "₹299" ? 299 : 999}
+                    amount={99}
                     onSuccess={() => {
                       setShowModal(true)
                     }}

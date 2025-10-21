@@ -197,11 +197,23 @@ router.post("/generate-pdf", async (req, res) => {
     
     // 4️⃣ Generate the PDF
     console.log(`📄 Generating PDF for audit: ${trackingId}`);
+    console.log(`📄 Audit data:`, JSON.stringify(auditData, null, 2));
+    
     const pdfPath = await generateAuditPDF(auditData, filename);
     
+    // Verify the PDF was created
+    const fs = await import('fs');
+    if (!fs.existsSync(pdfPath)) {
+      throw new Error(`PDF file was not created at: ${pdfPath}`);
+    }
+    
+    console.log(`✅ PDF generated successfully at: ${pdfPath}`);
+    
     // 5️⃣ Return the download URL
-    const baseUrl = process.env.PUBLIC_URL || 'http://localhost:3001';
+    const baseUrl = process.env.PUBLIC_URL || 'https://558acd4cec29.ngrok-free.app';
     const downloadUrl = `${baseUrl}/api/audit/download-pdf/${filename}.pdf`;
+    
+    console.log(`🔗 Download URL: ${downloadUrl}`);
     
     res.json({
       success: true,
@@ -223,6 +235,36 @@ router.post("/generate-pdf", async (req, res) => {
 });
 
 /**
+ * @route GET /api/audit/list-pdfs
+ * Lists all available PDF files (for debugging)
+ */
+router.get("/list-pdfs", async (req, res) => {
+  try {
+    // Use path.resolve for consistent cross-platform path handling
+    const backendDir = path.resolve(process.cwd(), 'backend');
+    const reportsDir = path.resolve(backendDir, 'reports');
+    const fs = await import('fs');
+    
+    // Ensure reports directory exists
+    if (!fs.existsSync(reportsDir)) {
+      console.log(`📁 Creating reports directory: ${reportsDir}`);
+      fs.mkdirSync(reportsDir, { recursive: true });
+    }
+    
+    const files = fs.readdirSync(reportsDir).filter(file => file.endsWith('.pdf'));
+    res.json({ 
+      success: true, 
+      files: files,
+      directory: reportsDir,
+      count: files.length
+    });
+  } catch (err) {
+    console.error("List PDFs error:", err);
+    res.status(500).json({ success: false, msg: "Failed to list PDFs" });
+  }
+});
+
+/**
  * @route GET /api/audit/download-pdf/:filename
  * Serves the generated PDF file for download
  */
@@ -234,20 +276,38 @@ router.get("/download-pdf/:filename", async (req, res) => {
   }
 
   try {
-    const pdfPath = path.join(process.cwd(), 'reports', filename);
+    // Use path.resolve for consistent cross-platform path handling
+    const backendDir = path.resolve(process.cwd(), 'backend');
+    const reportsDir = path.resolve(backendDir, 'reports');
+    const pdfPath = path.resolve(reportsDir, filename);
+    
+    console.log(`📁 Backend directory: ${backendDir}`);
+    console.log(`📁 Reports directory: ${reportsDir}`);
+    console.log(`🔍 Looking for PDF at: ${pdfPath}`);
     
     // Check if file exists
     const fs = await import('fs');
     if (!fs.existsSync(pdfPath)) {
+      console.log(`❌ PDF file not found at: ${pdfPath}`);
+      // List all files in reports directory for debugging
+      try {
+        const files = fs.readdirSync(reportsDir);
+        console.log(`📁 Available files in reports directory:`, files);
+      } catch (err) {
+        console.log(`❌ Could not read reports directory: ${err.message}`);
+      }
       return res.status(404).json({ success: false, msg: "PDF file not found" });
     }
 
-    // Set headers for PDF download
-    res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
-    
-    // Send the file
-    res.sendFile(pdfPath);
+    // Use res.download() for proper file download handling
+    res.download(pdfPath, filename, (err) => {
+      if (err) {
+        console.error('Download error:', err);
+        if (!res.headersSent) {
+          res.status(500).json({ success: false, msg: "Failed to download PDF" });
+        }
+      }
+    });
 
   } catch (err) {
     console.error("PDF download error:", err);

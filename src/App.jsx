@@ -7,6 +7,7 @@ import Contact from "./pages/Contact";
 import AuditPage from "./pages/AuditPage";
 import Dashboard from "./pages/Dashboard";
 import StartAudit from "./pages/StartAudit";
+import PreviewAudit from "./pages/PreviewAudit";
 
 function App() {
   return (
@@ -18,6 +19,7 @@ function App() {
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/about" element={<About />} />
         <Route path="/contact" element={<Contact />} />
+        <Route path="/preview" element={<PreviewAudit />} />
       </Routes>
       <Toaster 
         position="top-right"
