@@ -2,7 +2,8 @@ import { Router } from "express";
 import supabase from "../supabaseClient.js";
 import { triggerBrightDataIngestion } from "../brightdataClient.js";
 import { analyzeWithGemini } from "../geminiClient.js";
-import { generateAuditPDF, parseAuditData } from "../utils/pdfGenerator.js";
+// ⛔️ REMOVED parseAuditData from this import
+import { generateAuditPDF } from "../utils/pdfGenerator.js";
 import path from "path";
 
 const router = Router();
@@ -43,7 +44,7 @@ router.post("/submit", async (req, res) => {
         profile_url: profileUrl,
         status: "running",
         snapshot_id: brightDataResponse.snapshot_id,
-        audit_report: ""
+        audit_report: "" // Stays empty for now
       }])
       .select();
 
@@ -100,14 +101,15 @@ router.post("/webhook", async (req, res) => {
 
     // 3️⃣ Analyze the received data with Gemini.
     console.log(`Analyzing data for audit tracking_id: ${audit.tracking_id}`);
-    const report = await analyzeWithGemini(profileData);
+    const reportJson = await analyzeWithGemini(profileData); // This is now a JSON *object*
 
     // 4️⃣ Update the audit record with the report and set status to 'ready'.
+    // We store the *stringified* version in the database
     const { error: updateError } = await supabase
       .from("audits")
       .update({
         status: "ready",
-        audit_report: report
+        audit_report: JSON.stringify(reportJson) // Store as string
       })
       .eq("id", audit.id); // Update using the unique record ID.
 
@@ -121,13 +123,6 @@ router.post("/webhook", async (req, res) => {
     res.status(500).json({ success: false, msg: "Internal server error" });
   }
 });
-
-
-
-
-// backend/routes/audit.js
-
-// ... (existing imports and /submit, /webhook routes) ...
 
 /**
  * @route GET /api/audit/status/:trackingId
@@ -151,6 +146,8 @@ router.get("/status/:trackingId", async (req, res) => {
       return res.status(404).json({ success: false, msg: "Audit not found" });
     }
 
+    // `audit_report` is sent to the frontend as a string, which is what
+    // your AuditPage.jsx component now correctly handles with JSON.parse()
     res.json({ success: true, data: audit });
   } catch (err) {
     console.error("Status fetch error:", err);
@@ -183,38 +180,51 @@ router.post("/generate-pdf", async (req, res) => {
     }
 
     if (audit.status !== "ready") {
-      return res.status(400).json({ 
-        success: false, 
-        msg: "Audit is not ready yet. Please wait for the analysis to complete." 
+      return res.status(400).json({
+        success: false,
+        msg: "Audit is not ready yet. Please wait for the analysis to complete."
       });
     }
 
-    // 2️⃣ Parse the audit report into structured data
-    const auditData = parseAuditData(audit.audit_report, audit.profile_url);
+    // 2️⃣ ✅ NEW: Parse the audit_report JSON string from the DB
+    let parsedAuditData;
+    try {
+      parsedAuditData = JSON.parse(audit.audit_report);
+    } catch (e) {
+      console.error("Failed to parse audit_report JSON:", e);
+      return res.status(500).json({ success: false, msg: "Failed to read corrupted audit data." });
+    }
     
-    // 3️⃣ Generate PDF filename
+    // 3️⃣ Enrich the data object for the PDF template
+    const pdfData = {
+        ...parsedAuditData, // This includes overallScore, name, headline, strengths, etc.
+        linkedinUrl: audit.profile_url, // Add the full URL
+        date: new Date().toLocaleDateString('en-US', { dateStyle: 'long' }),
+        subtitle: "LinkedIn Profile Audit" // Add a subtitle
+    };
+
+    // 4️⃣ Generate PDF filename
     const filename = `audit_report_${trackingId}_${Date.now()}`;
-    
-    // 4️⃣ Generate the PDF
+
+    // 5️⃣ Generate the PDF using the new function
     console.log(`📄 Generating PDF for audit: ${trackingId}`);
-    console.log(`📄 Audit data:`, JSON.stringify(auditData, null, 2));
-    
-    const pdfPath = await generateAuditPDF(auditData, filename);
-    
+    // Pass the parsed and enriched object directly
+    const pdfPath = await generateAuditPDF(pdfData, filename);
+
     // Verify the PDF was created
     const fs = await import('fs');
     if (!fs.existsSync(pdfPath)) {
       throw new Error(`PDF file was not created at: ${pdfPath}`);
     }
-    
+
     console.log(`✅ PDF generated successfully at: ${pdfPath}`);
-    
-    // 5️⃣ Return the download URL
+
+    // 6️⃣ Return the download URL
     const baseUrl = process.env.PUBLIC_URL || 'https://558acd4cec29.ngrok-free.app';
     const downloadUrl = `${baseUrl}/api/audit/download-pdf/${filename}.pdf`;
-    
+
     console.log(`🔗 Download URL: ${downloadUrl}`);
-    
+
     res.json({
       success: true,
       message: "PDF generated successfully",
@@ -227,9 +237,9 @@ router.post("/generate-pdf", async (req, res) => {
 
   } catch (err) {
     console.error("PDF generation error:", err);
-    res.status(500).json({ 
-      success: false, 
-      msg: "Failed to generate PDF report" 
+    res.status(500).json({
+      success: false,
+      msg: "Failed to generate PDF report"
     });
   }
 });
@@ -244,16 +254,16 @@ router.get("/list-pdfs", async (req, res) => {
     const backendDir = path.resolve(process.cwd(), 'backend');
     const reportsDir = path.resolve(backendDir, 'reports');
     const fs = await import('fs');
-    
+
     // Ensure reports directory exists
     if (!fs.existsSync(reportsDir)) {
       console.log(`📁 Creating reports directory: ${reportsDir}`);
       fs.mkdirSync(reportsDir, { recursive: true });
     }
-    
+
     const files = fs.readdirSync(reportsDir).filter(file => file.endsWith('.pdf'));
-    res.json({ 
-      success: true, 
+    res.json({
+      success: true,
       files: files,
       directory: reportsDir,
       count: files.length
@@ -270,7 +280,7 @@ router.get("/list-pdfs", async (req, res) => {
  */
 router.get("/download-pdf/:filename", async (req, res) => {
   const { filename } = req.params;
-  
+
   if (!filename || !filename.endsWith('.pdf')) {
     return res.status(400).json({ success: false, msg: "Invalid filename" });
   }
@@ -280,11 +290,11 @@ router.get("/download-pdf/:filename", async (req, res) => {
     const backendDir = path.resolve(process.cwd(), 'backend');
     const reportsDir = path.resolve(backendDir, 'reports');
     const pdfPath = path.resolve(reportsDir, filename);
-    
+
     console.log(`📁 Backend directory: ${backendDir}`);
     console.log(`📁 Reports directory: ${reportsDir}`);
     console.log(`🔍 Looking for PDF at: ${pdfPath}`);
-    
+
     // Check if file exists
     const fs = await import('fs');
     if (!fs.existsSync(pdfPath)) {
@@ -316,6 +326,3 @@ router.get("/download-pdf/:filename", async (req, res) => {
 });
 
 export default router;
-
-
-

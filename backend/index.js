@@ -1,7 +1,9 @@
-// Import your specific route handlers directly
+
 import auditRoutes from './routes/audit.js';
 import paymentRoutes from "./routes/payment.js";
-
+import express from "express";
+import dotenv from "dotenv";
+import cors from "cors";
 dotenv.config();
 const app = express();
 const port = process.env.PORT || 3001;

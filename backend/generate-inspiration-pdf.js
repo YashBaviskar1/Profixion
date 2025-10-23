@@ -410,7 +410,7 @@ async function generateInspirationPDF(auditData) {
         <div class="header">
             <div class="logo-section">
                 <div class="logo">
-                    <img src="/logo.png" alt="Profixion Logo" style="height: 60px; width: auto;" />
+                    <img src="logo.png" alt="Profixion Logo" style="height: 60px; width: auto;" />
                 </div>
             </div>
             <div class="date-section">

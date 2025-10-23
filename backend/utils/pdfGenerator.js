@@ -7,466 +7,295 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 /**
- * Generate the new enhanced HTML template matching the frontend design
+ * Reads the logo.png file and returns a Base64 data URL.
+ * Provides a fallback SVG placeholder if the file is not found.
  */
-function generateHTMLTemplate(auditData) {
-  const { profileUrl, overallScore, strengths, weaknesses, recommendations } = auditData;
-  
-  // Extract metrics from audit data
-  const connectionCount = auditData.connectionCount || 'N/A';
-  const monthlyPosts = auditData.monthlyPosts || 'N/A';
-  const engagementRate = auditData.engagementRate || 'N/A';
-  
-  return `
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI-Powered Social Media Audit Report</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-            background-color: #1A1A1A;
-            color: #ffffff;
-            line-height: 1.4;
-            padding: 20px;
-        }
-        
-        .header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 30px;
-        }
-        
-        .logo {
-            text-align: left;
-            margin-bottom: 0;
-        }
-        
-        .logo img {
-            height: 60px;
-            width: auto;
-        }
-        
-        .date-section {
-            text-align: right;
-        }
-        
-        .date {
-            font-size: 12px;
-            color: #ffffff;
-            margin-bottom: 5px;
-        }
-        
-        .profile-url {
-            font-size: 10px;
-            color: #9ca3af;
-        }
-        
-        .main-title {
-            font-size: 18px;
-            font-weight: 700;
-            color: #3b82f6;
-            margin: 30px 0;
-        }
-        
-        .grid-container {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 10px;
-            margin-bottom: 20px;
-        }
-        
-        .card {
-            background-color: #2C2C2C;
-            border: 1px solid #404040;
-            border-radius: 8px;
-            padding: 12px;
-            margin-bottom: 10px;
-        }
-        
-        .card-title {
-            font-size: 12px;
-            font-weight: 600;
-            color: #ffffff;
-            margin-bottom: 8px;
-        }
-        
-        .score-display {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        
-        .score-number {
-            font-size: 24px;
-            font-weight: 700;
-            color: #3b82f6;
-        }
-        
-        .score-label {
-            font-size: 10px;
-            color: #ffffff;
-        }
-        
-        .score-subtitle {
-            font-size: 8px;
-            color: #9ca3af;
-        }
-        
-        .progress-bar {
-            width: 100%;
-            height: 8px;
-            background-color: #404040;
-            border-radius: 4px;
-            margin-top: 8px;
-            overflow: hidden;
-        }
-        
-        .progress-fill {
-            height: 100%;
-            background-color: #3b82f6;
-            border-radius: 4px;
-            width: ${overallScore}%;
-        }
-        
-        .metrics-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr 1fr;
-            gap: 15px;
-        }
-        
-        .metric {
-            text-align: center;
-        }
-        
-        .metric-value {
-            font-size: 14px;
-            font-weight: 700;
-            color: #3b82f6;
-        }
-        
-        .metric-label {
-            font-size: 8px;
-            color: #9ca3af;
-        }
-        
-        .analysis-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 10px;
-        }
-        
-        .analysis-table th,
-        .analysis-table td {
-            padding: 6px 8px;
-            text-align: left;
-            border-bottom: 1px solid #404040;
-            font-size: 9px;
-        }
-        
-        .analysis-table th {
-            background-color: #2C2C2C;
-            color: #ffffff;
-            font-weight: 600;
-        }
-        
-        .analysis-table tr:nth-child(even) {
-            background-color: #1A1A1A;
-        }
-        
-        .chart-container {
-            height: 60px;
-            display: flex;
-            align-items: end;
-            gap: 4px;
-            margin-top: 10px;
-        }
-        
-        .chart-bar {
-            flex: 1;
-            background-color: #3b82f6;
-            border-radius: 2px 2px 0 0;
-            min-height: 4px;
-        }
-        
-        .chart-bar:nth-child(3) {
-            background-color: #f59e0b;
-        }
-        
-        .chart-bar:nth-child(4) {
-            background-color: #10b981;
-        }
-        
-        .list-item {
-            display: flex;
-            align-items: center;
-            margin: 6px 0;
-            font-size: 9px;
-            color: #ffffff;
-        }
-        
-        .list-item::before {
-            content: '•';
-            color: #10b981;
-            margin-right: 8px;
-            font-weight: bold;
-        }
-        
-        .weaknesses .list-item::before {
-            color: #f59e0b;
-        }
-        
-        .recommendations .list-item::before {
-            color: #3b82f6;
-        }
-        
-        .action-item {
-            margin: 8px 0;
-            font-size: 9px;
-            color: #ffffff;
-        }
-        
-        .action-progress {
-            width: 100%;
-            height: 4px;
-            background-color: #404040;
-            border-radius: 2px;
-            margin-top: 4px;
-            overflow: hidden;
-        }
-        
-        .action-progress-fill {
-            height: 100%;
-            border-radius: 2px;
-        }
-        
-        .footer {
-            margin-top: 30px;
-            padding-top: 20px;
-            border-top: 1px solid #404040;
-            text-align: center;
-            color: #9ca3af;
-            font-size: 8px;
-        }
-        
-        @media print {
-            body {
-                padding: 10px;
-            }
-        }
-    </style>
-</head>
-<body>
-    <div class="header">
-        <div class="logo">
-            <img src="/logo.png" alt="Profixion Logo" style="height: 60px; width: auto;" />
-        </div>
-        <div class="date-section">
-            <div class="date">${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}</div>
-            <div class="profile-url">${profileUrl}</div>
-        </div>
-    </div>
-    
-    <div class="main-title">AI-POWERED SOCIAL MEDIA AUDIT REPORT</div>
-    
-    <div class="grid-container">
-        <!-- Profile Strength Card -->
-        <div class="card">
-            <div class="card-title">Profile Strength</div>
-            <div class="score-display">
-                <div class="score-number">${overallScore}</div>
-                <div>
-                    <div class="score-label">${overallScore >= 70 ? 'Excellent' : overallScore >= 50 ? 'Good' : 'Needs Work'}</div>
-                    <div class="score-subtitle">Profile optimization score</div>
-                </div>
-            </div>
-            <div class="progress-bar">
-                <div class="progress-fill"></div>
-            </div>
-        </div>
-        
-        <!-- Key Metrics Card -->
-        <div class="card">
-            <div class="card-title">Key Metrics</div>
-            <div class="metrics-grid">
-                <div class="metric">
-                    <div class="metric-value">${connectionCount}</div>
-                    <div class="metric-label">Connections</div>
-                </div>
-                <div class="metric">
-                    <div class="metric-value">${monthlyPosts}</div>
-                    <div class="metric-label">Posts/Month</div>
-                </div>
-                <div class="metric">
-                    <div class="metric-value">${engagementRate}%</div>
-                    <div class="metric-label">Engagement</div>
-                </div>
-            </div>
-        </div>
-        
-        <!-- Profile Analysis Table -->
-        <div class="card">
-            <div class="card-title">Profile Analysis</div>
-            <table class="analysis-table">
-                <thead>
-                    <tr>
-                        <th>Category</th>
-                        <th>Score</th>
-                        <th>Status</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td>Profile Photo</td>
-                        <td>85%</td>
-                        <td>Good</td>
-                    </tr>
-                    <tr>
-                        <td>Headline</td>
-                        <td>72%</td>
-                        <td>Good</td>
-                    </tr>
-                    <tr>
-                        <td>Summary</td>
-                        <td>45%</td>
-                        <td>Poor</td>
-                    </tr>
-                    <tr>
-                        <td>Experience</td>
-                        <td>78%</td>
-                        <td>Good</td>
-                    </tr>
-                    <tr>
-                        <td>Skills</td>
-                        <td>60%</td>
-                        <td>Fair</td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-        
-        <!-- Engagement Trends Chart -->
-        <div class="card">
-            <div class="card-title">Engagement Trends</div>
-            <div class="chart-container">
-                <div class="chart-bar" style="height: 45%"></div>
-                <div class="chart-bar" style="height: 52%"></div>
-                <div class="chart-bar" style="height: 38%"></div>
-                <div class="chart-bar" style="height: 61%"></div>
-                <div class="chart-bar" style="height: 48%"></div>
-            </div>
-        </div>
-        
-        <!-- Strengths -->
-        <div class="card">
-            <div class="card-title">Strengths</div>
-            ${strengths.slice(0, 5).map(strength => `<div class="list-item">${strength}</div>`).join('')}
-        </div>
-        
-        <!-- Action Plan -->
-        <div class="card">
-            <div class="card-title">Action Plan</div>
-            <div class="action-item">
-                <div>Add job descriptions</div>
-                <div class="action-progress">
-                    <div class="action-progress-fill" style="width: 85%; background-color: #f59e0b;"></div>
-                </div>
-            </div>
-            <div class="action-item">
-                <div>Include skills section</div>
-                <div class="action-progress">
-                    <div class="action-progress-fill" style="width: 60%; background-color: #3b82f6;"></div>
-                </div>
-            </div>
-            <div class="action-item">
-                <div>Create professional summary</div>
-                <div class="action-progress">
-                    <div class="action-progress-fill" style="width: 40%; background-color: #10b981;"></div>
-                </div>
-            </div>
-        </div>
-    </div>
-    
-    <div class="footer">
-        <p>Generated by Profixion - Enhance your online presence with AI-driven social media insights</p>
-    </div>
-</body>
-</html>
+function getLogoSrc() {
+  // Resolve path from the root of the project, assuming 'backend' folder
+  const logoPath = path.resolve(process.cwd(), 'backend', 'logo.png');
+
+  if (fs.existsSync(logoPath)) {
+    const logoBase64 = fs.readFileSync(logoPath, 'base64');
+    return `data:image/png;base64,${logoBase64}`;
+  }
+
+  console.warn('⚠️ logo.png not found. Using a text placeholder.');
+  // Fallback SVG placeholder
+  const fallbackSvg = `
+    <svg width="240" height="50" xmlns="http://www.w3.org/2000/svg">
+      <rect width="240" height="50" fill="transparent"/>
+      <text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle"
+        font-family="Inter, sans-serif" font-size="28" fill="#f4f4f5" font-weight="900"
+        letter-spacing="0.1em">
+        PROFIXION
+      </text>
+    </svg>
   `;
+  return `data:image/svg+xml;base64,${Buffer.from(fallbackSvg).toString('base64')}`;
 }
 
 /**
- * Generate PDF from audit data
- * @param {Object} auditData - The audit data object
+ * Helper function to build an HTML list from an array of strings.
+ * @param {string[]} items - Array of strings (e.g., strengths, weaknesses).
+ * @param {string} iconSvg - The raw SVG string for the icon.
+ */
+function buildListHTML(items, iconSvg) {
+  if (!items || items.length === 0) {
+    return '<li>No items found.</li>';
+  }
+  return items.map(item => `
+    <li class="flex items-start text-zinc-200">
+      <div class="shrink-0 w-5 h-5 mr-3">${iconSvg}</div>
+      <span>${item}</span>
+    </li>
+  `).join('');
+}
+
+// Define SVGs for icons
+const iconStrength = `<svg class="w-5 h-5 text-green-500" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" /></svg>`;
+const iconWeakness = `<svg class="w-5 h-5 text-red-500" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM7 9a1 1 0 000 2h6a1 1 0 100-2H7z" clip-rule="evenodd" /></svg>`;
+const iconImprovement = `<svg class="w-5 h-5 text-amber-400" fill="currentColor" viewBox="0 0 20 20"><path d="M4 3a2 2 0 100 4h12a2 2 0 100-4H4z" /><path fill-rule="evenodd" d="M3 8h14v7a2 2 0 01-2 2H5a2 2 0 01-2-2V8zm5 3a1 1 0 011-1h2a1 1 0 110 2H9a1 1 0 01-1-1z" clip-rule="evenodd" /></svg>`;
+const iconActionPlan = `<svg class="w-6 h-6 text-blue-400" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 18v-5.25m0 0a6.01 6.01 0 0 0 1.5-.189m-1.5.189a6.01 6.01 0 0 1-1.5-.189m3.75 7.478a12.06 12.06 0 0 1-4.5 0m3.75 2.383a14.406 14.406 0 0 1-3 0M14.25 18v-.192c0-.983.658-1.823 1.508-2.316a7.5 7.5 0 1 0-7.517 0c.85.493 1.508 1.333 1.508 2.316V18" /></svg>`;
+
+
+/**
+ * Generate PDF from the structured audit data object
+ * @param {Object} auditData - The parsed JSON audit data object
  * @param {string} filename - The filename for the PDF (without extension)
  * @returns {Promise<string>} - The file path of the generated PDF
  */
 export async function generateAuditPDF(auditData, filename) {
   let browser;
-  
+
   try {
-    // Use path.resolve for consistent cross-platform path handling
+    // Resolve paths relative to the 'backend' directory
     const backendDir = path.resolve(process.cwd(), 'backend');
     const reportsDir = path.resolve(backendDir, 'reports');
     console.log(`📁 Reports directory: ${reportsDir}`);
-    
+
     if (!fs.existsSync(reportsDir)) {
       console.log(`📁 Creating reports directory: ${reportsDir}`);
       fs.mkdirSync(reportsDir, { recursive: true });
     }
+
+    const logoSrc = getLogoSrc();
+
+    // Use default values if data is missing
+    const reportData = {
+      score: auditData.overallScore || 0,
+      linkedinUrl: auditData.linkedinUrl || '#',
+      date: new Date().toLocaleDateString('en-US', { dateStyle: 'long' }),
+      name: auditData.name || 'N/A',
+      title: auditData.headline || 'N/A',
+      subtitle: auditData.subtitle || 'LinkedIn Profile Audit',
+      strengths: auditData.strengths || [],
+      weaknesses: auditData.weaknesses || [],
+      recommendations: auditData.recommendations || [],
+      actionPlan: auditData.actionPlan || [],
+    };
     
+    // Calculate SVG stroke offset for the progress circle
+    const circumference = 2 * Math.PI * 60; // 2 * pi * radius
+    const strokeOffset = circumference * (1 - (reportData.score / 100));
+
+    // Generate dynamic HTML lists
+    const strengthsHTML = buildListHTML(reportData.strengths, iconStrength);
+    const weaknessesHTML = buildListHTML(reportData.weaknesses, iconWeakness);
+    const recommendationsHTML = buildListHTML(reportData.recommendations, iconImprovement);
+    const actionPlanHTML = buildListHTML(reportData.actionPlan, iconActionPlan, true); // Use different style for action plan
+
+    const html = `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Profixion Report</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+    
+    body {
+      background-color: #0a0a0a; /* zinc-950, very dark bg for printing */
+      font-family: 'Inter', sans-serif;
+      color: #e4e4e7; /* zinc-200 */
+      -webkit-print-color-adjust: exact; /* Force background colors in print */
+      print-color-adjust: exact;
+    }
+    
+    #pdf-content {
+      width: 794px;   /* A4 width */
+      /* 🛑 REMOVED fixed height: 1123px; */
+      min-height: 1123px; /* ✅ ADDED: Ensures short reports still look good */
+      background-color: #000000;
+      box-shadow: 0 0 20px rgba(255, 255, 255, 0.05);
+      padding: 40px;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .card {
+      background-color: #18181b; /* zinc-900 */
+      border-radius: 12px;
+      padding: 24px;
+    }
+  </style>
+</head>
+
+<body class="flex items-center justify-center min-h-screen">
+  <div id="pdf-content">
+    
+    <header class="flex flex-col items-center pt-2 pb-6 border-b border-zinc-700">
+      <img src="${logoSrc}" alt="PROFIXION" class="h-10">
+      <span class="text-xs uppercase tracking-[0.2em] text-zinc-500 mt-2">Fix • Polish • Shine Online</span>
+    </header>
+
+    <section class="mt-8 flex justify-between items-start">
+      <div>
+        <h1 class="text-4xl font-extrabold text-blue-400">AI-POWERED</h1>
+        <h2 class="text-4xl font-extrabold text-white">LinkedIn Profile AUDIT REPORT</h2>
+      </div>
+      <div class="text-right text-sm">
+        <p class="text-zinc-400">${reportData.date}</p>
+        <a href="${reportData.linkedinUrl}" class="text-zinc-400 hover:text-blue-400">
+          ${reportData.linkedinUrl.replace('https://www.', '')}
+        </a>
+      </div>
+    </section>
+
+    <main class="mt-8 grid grid-cols-12 gap-6 flex-grow">
+      
+      <div class="col-span-5 flex flex-col gap-6">
+        
+        <div class="card flex flex-col items-center">
+          <h3 class="text-lg font-semibold text-white mb-4">Profile Strength</h3>
+          <div class="relative w-48 h-48">
+            <svg class="w-full h-full" viewBox="0 0 140 140">
+              <circle cx="70" cy="70" r="60" fill="none" stroke="#27272a" stroke-width="12"></circle>
+              <circle cx="70" cy="70" r="60" fill="none" stroke="#60a5fa" stroke-width="12"
+                stroke-linecap="round"
+                transform="rotate(-90 70 70)"
+                stroke-dasharray="${circumference}"
+                stroke-dashoffset="${strokeOffset}">
+              </circle>
+            </svg>
+            <div class="absolute inset-0 flex flex-col items-center justify-center">
+              <span class="text-5xl font-bold text-white">${reportData.score}</span>
+              <span class="text-lg text-zinc-400">/ 100</span>
+            </div>
+          </div>
+          <p class="text-center text-2xl font-semibold text-white mt-4">
+            ${reportData.score >= 85 ? 'Excellent' : reportData.score >= 70 ? 'Good' : 'Needs Work'}
+          </p>
+        </div>
+
+        <div class="card flex items-center gap-4">
+          <div class="w-12 h-12 bg-zinc-800 rounded-full flex items-center justify-center shrink-0">
+            <svg class="w-6 h-6 text-zinc-400" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A1.5 1.5 0 0 1 18 21.75H6a1.5 1.5 0 0 1-1.499-1.632Z" />
+            </svg>
+          </div>
+          <div>
+            <h3 class="text-xl font-bold text-white">${reportData.name}</h3>
+            <p class="text-sm text-zinc-400">${reportData.title}</p>
+            <p class="text-sm text-zinc-400">${reportData.subtitle}</p>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="flex items-center gap-2 mb-4">
+            ${iconActionPlan}
+            <h3 class="text-lg font-semibold text-white">Action Plan</h3>
+          </div>
+          <ul class="space-y-3 text-zinc-300">
+            ${actionPlanHTML}
+          </ul>
+        </div>
+        
+      </div>
+
+      <div class="col-span-7 flex flex-col gap-6">
+
+        <div class="card">
+          <div class="flex items-center gap-2 mb-4">
+            ${iconWeakness.replace('text-red-500', 'text-amber-400')} <!-- Use amber for "improvement" -->
+            <h3 class="text-lg font-semibold text-white">Areas for Improvement</h3>
+          </div>
+          <ul class="space-y-3">
+            ${weaknessesHTML.replace('text-red-500', 'text-amber-400')}
+          </ul>
+        </div>
+
+        <div class="card">
+          <div class="flex items-center gap-2 mb-4">
+            ${iconImprovement.replace('text-amber-400', 'text-blue-400')} <!-- Use blue for "recommendations" -->
+            <h3 class="text-lg font-semibold text-white">Actionable Recommendations</h3>
+          </div>
+          <ul class="space-y-3">
+            ${recommendationsHTML.replace('text-amber-400', 'text-blue-400')}
+          </ul>
+        </div>
+        
+        <div class="card">
+          <div class="flex items-center gap-2 mb-4">
+            ${iconStrength}
+            <h3 class="text-lg font-semibold text-white">Strengths</h3>
+          </div>
+          <ul class="space-y-3">
+            ${strengthsHTML}
+          </ul>
+        </div>
+
+      </div>
+    </main>
+
+    <footer class="absolute bottom-6 left-0 right-0 text-center text-zinc-500 text-xs px-10">
+      Generated by <span class="font-semibold text-zinc-300">Profixion</span> - Enhance your online presence with AI-driven social media insights
+    </footer>
+    
+  </div>
+</body>
+</html>
+  `;
+
     // Launch Puppeteer
     browser = await puppeteer.launch({
-      headless: 'new',
+      headless: 'new', // Use the new headless mode
       args: ['--no-sandbox', '--disable-setuid-sandbox']
     });
-    
+
     const page = await browser.newPage();
-    
-    // Generate HTML content
-    const htmlContent = generateHTMLTemplate(auditData);
-    
-    // Set content and wait for fonts to load
-    await page.setContent(htmlContent, { 
-      waitUntil: 'networkidle0',
-      timeout: 30000 
+
+    // Set content and wait for network (Tailwind CDN, fonts)
+    await page.setContent(html, { waitUntil: "networkidle0", timeout: 30000 });
+
+    // ✅ NEW: Get the actual height of the content
+    const pageHeight = await page.evaluate(() => {
+      return document.documentElement.scrollHeight;
     });
-    
+
     // Generate PDF
     const pdfPath = path.resolve(reportsDir, `${filename}.pdf`);
     console.log(`📄 Generating PDF at: ${pdfPath}`);
     
+    // ✅ UPDATED: Removed 'format' and now use dynamic height
     await page.pdf({
       path: pdfPath,
-      format: 'A4',
-      printBackground: true,
-      margin: {
-        top: '20mm',
-        right: '20mm',
-        bottom: '20mm',
-        left: '20mm'
-      },
-      preferCSSPageSize: true
+      width: '794px', // Keep the A4 width
+      height: `${pageHeight}px`, // Use the calculated dynamic height
+      printBackground: true, // Crucial for dark mode
+      margin: { top: 0, bottom: 0, left: 0, right: 0 },
     });
-    
+
     // Verify the file was created
     if (!fs.existsSync(pdfPath)) {
       throw new Error(`PDF file was not created at: ${pdfPath}`);
     }
-    
+
     const stats = fs.statSync(pdfPath);
     console.log(`✅ PDF generated successfully: ${pdfPath} (${stats.size} bytes)`);
     return pdfPath;
-    
+
   } catch (error) {
     console.error('❌ Error generating PDF:', error);
     throw new Error(`Failed to generate PDF: ${error.message}`);
@@ -477,82 +306,3 @@ export async function generateAuditPDF(auditData, filename) {
   }
 }
 
-/**
- * Parse audit report text into structured data
- * @param {string} reportText - The raw audit report text
- * @param {string} profileUrl - The profile URL
- * @returns {Object} - Structured audit data
- */
-export function parseAuditData(reportText, profileUrl) {
-  const auditData = {
-    profileUrl,
-    overallScore: 0,
-    strengths: [],
-    weaknesses: [],
-    recommendations: [],
-    // Add new metrics for enhanced design
-    connectionCount: 'N/A',
-    monthlyPosts: 'N/A',
-    engagementRate: 'N/A'
-  };
-
-  if (!reportText || typeof reportText !== 'string') {
-    return auditData;
-  }
-
-  // Extract overall score allowing looser phrasing
-  const scoreMatch = reportText.match(/Overall\s*Score[^\d]*(\d{1,3})/i);
-  if (scoreMatch) {
-    const score = parseInt(scoreMatch[1], 10);
-    if (!Number.isNaN(score)) {
-      auditData.overallScore = Math.max(0, Math.min(100, score));
-    }
-  }
-
-  const headings = ['Strengths', 'Weaknesses', 'Areas for Improvement', 'Recommendations', 'Actionable Recommendations'];
-  const nextHeadingRegex = new RegExp(`(?:^|\n)\s*(?:\\*\\*\s*(?:${headings.join('|')})\s*:?\\*\\*|(?:${headings.join('|')})\s*:?)(?=\n)`, 'i');
-
-  const extractSection = (variants) => {
-    const titlePattern = variants.join('|');
-    const startRegex = new RegExp(`(?:^|\n)\s*(?:\\*\\*\s*(?:${titlePattern})\s*:?\\*\\*|(?:${titlePattern})\s*:?)(?:\s*\n|\s+)`, 'i');
-    const startMatch = startRegex.exec(reportText);
-    if (!startMatch) return [];
-
-    const startIdx = startMatch.index + startMatch[0].length;
-    const remainder = reportText.slice(startIdx);
-    const endMatch = nextHeadingRegex.exec(remainder);
-    const sectionText = endMatch ? remainder.slice(0, endMatch.index) : remainder;
-
-    const lines = sectionText.split('\n').map(l => l.trim()).filter(Boolean);
-    const items = [];
-    for (const line of lines) {
-      const bullet = line.match(/^([\\*\\-\\•]|\d+[\.)])\s*(.+)$/);
-      const text = bullet ? bullet[2] : line;
-      const cleaned = text.replace(/^[-–—]\s*/, '').trim();
-      if (cleaned.length >= 3) items.push(cleaned);
-    }
-    return items;
-  };
-
-  auditData.strengths = extractSection(['Strengths']);
-  auditData.weaknesses = extractSection(['Weaknesses', 'Areas for Improvement']);
-  auditData.recommendations = extractSection(['Recommendations', 'Actionable Recommendations']);
-
-  // Try to extract additional metrics from the report text
-  const connectionMatch = reportText.match(/(\d+(?:\.\d+)?[KMB]?)\s*(?:connections?|followers?)/i);
-  if (connectionMatch) {
-    auditData.connectionCount = connectionMatch[1];
-  }
-
-  const postsMatch = reportText.match(/(\d+)\s*(?:posts?|updates?)\s*(?:per\s*month|monthly)/i);
-  if (postsMatch) {
-    auditData.monthlyPosts = postsMatch[1];
-  }
-
-  const engagementMatch = reportText.match(/(\d+(?:\.\d+)?)%\s*(?:engagement|interaction)/i);
-  if (engagementMatch) {
-    auditData.engagementRate = engagementMatch[1];
-  }
-
-  return auditData;
-}

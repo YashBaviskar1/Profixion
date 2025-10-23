@@ -20,22 +20,22 @@ export default function CTA() {
       toast.error("Please complete payment to start the audit.");
       return;
     }
-
+    const profileUrlToTest = profile.split('?')[0]
     // 3. Validate the URL before submitting
     const linkedinRegex = /^(https?:\/\/)?(www\.)?linkedin\.com\/(in|pub)\/[a-zA-Z0-9_-]+\/?$/;
-    if (!linkedinRegex.test(profile)) {
+    if (!linkedinRegex.test(profileUrlToTest)) {
       toast.error("Please enter a valid LinkedIn profile URL.");
       return; // Stop the function if invalid
     }
 
-    console.log("Valid LinkedIn URL submitted:", profile); // Log if valid
+    console.log("Valid LinkedIn URL submitted:", profileUrlToTest); // Log if valid
     setIsLoading(true);
     
     try {
       // Assuming submitAudit now takes an object { profileUrl, authId }
       // You'll need to get the authId from your authentication context or state
       const authId = "user_123"; // Replace with your actual user auth logic
-      const data = await submitAudit({ profileUrl: profile, authId });
+      const data = await submitAudit({ profileUrl: profileUrlToTest, authId });
       
       toast.success(data.message || 'Audit started successfully!');
       const newTrackingId = data?.data?.trackingId;
