@@ -8,6 +8,7 @@ export default function Pricing() {
     {
       name: "LinkedIn Profile Audit",
       badge: "Professional",
+      originalPrice: "₹199",
       price: "₹99",
       period: "one-time",
       description: "Comprehensive AI-powered LinkedIn profile analysis",
@@ -46,41 +47,61 @@ export default function Pricing() {
 
         <div className="grid grid-cols-1 max-w-2xl mx-auto">
           {plans.map((plan, i) => (
-            <div key={i} className={`relative group`}>
+            <div key={i} className="relative group">
               <div
-                className={`relative h-full min-h-[520px] md:min-h-[600px] grid grid-rows-[auto,1fr,auto] p-8 md:p-10 rounded-2xl border-2 transition-all duration-300 transform hover:-translate-y-2 ${
+                className={`relative h-full min-h-[520px] md:min-h-[600px] grid grid-rows-[auto,1fr,auto] p-8 md:p-10 rounded-2xl border transition-all duration-300 hover:-translate-y-1 ${
                   plan.popular
-                    ? 'border-gray-600 bg-gradient-to-br from-gray-800 to-gray-900 shadow-2xl'
-                    : 'border-gray-800 bg-gray-900 shadow-lg hover:shadow-xl'
+                    ? 'border-gray-600 bg-gradient-to-br from-gray-800 to-gray-900 shadow-xl'
+                    : 'border-gray-800 bg-gray-900 shadow-lg'
                 }`}
               >
                 {plan.popular && (
-                  <div className="absolute -top-3 left-1/2 transform -translate-x-1/2 bg-gradient-to-r from-gray-600 to-gray-800 text-white px-6 py-2 rounded-full text-sm font-medium z-10">
+                  <div className="absolute -top-3 left-1/2 transform -translate-x-1/2 bg-gray-700 text-white px-5 py-1.5 rounded-full text-sm font-medium z-10">
                     Most Popular
                   </div>
                 )}
 
                 {/* Header */}
-                <div className="text-center mb-4">
+                <div className="text-center mb-6">
                   <div className="inline-flex items-center px-3 py-1 rounded-full border border-gray-700 text-gray-300 text-xs mb-4 bg-black/30">
                     {plan.badge}
                   </div>
-                  <h3 className="text-2xl font-bold text-white mb-2">{plan.name}</h3>
+                  <h3 className="text-2xl md:text-3xl font-bold text-white mb-2">{plan.name}</h3>
                   <p className="text-gray-400 mb-6">{plan.description}</p>
-                  <div className="">
-                    <span className="text-5xl font-bold bg-gradient-to-r from-gray-300 to-gray-500 bg-clip-text text-transparent">
-                      {plan.price}
-                    </span>
-                    <span className="text-gray-400">/{plan.period}</span>
+                  
+                  {/* Launch Offer Badge */}
+                  <div className="mb-4 inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-orange-600 text-white text-xs font-semibold">
+                    <span>🎉</span>
+                    <span>Launch Offer</span>
+                  </div>
+
+                  {/* Pricing Display */}
+                  <div className="flex flex-col items-center">
+                    {plan.originalPrice && (
+                      <div className="mb-2 flex items-center gap-2">
+                        <span className="text-xl text-gray-500 line-through">
+                          {plan.originalPrice}
+                        </span>
+                        <span className="inline-flex items-center px-2 py-0.5 rounded bg-green-500/20 text-green-400 text-xs font-semibold">
+                          50% OFF
+                        </span>
+                      </div>
+                    )}
+                    <div className="flex items-baseline">
+                      <span className="text-5xl md:text-6xl font-bold text-white">
+                        {plan.price}
+                      </span>
+                      <span className="text-gray-400 ml-2">/{plan.period}</span>
+                    </div>
                   </div>
                 </div>
 
-                {/* Body */}
-                <div className="">
+                {/* Body - Features */}
+                <div className="my-6">
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     {plan.features.map((feature, j) => (
                       <div key={j} className="flex items-start">
-                        <div className="mt-1 w-5 h-5 bg-gradient-to-r from-gray-500 to-gray-600 rounded-full flex items-center justify-center mr-3 flex-shrink-0">
+                        <div className="mt-1 w-5 h-5 bg-gray-600 rounded-full flex items-center justify-center mr-3 flex-shrink-0">
                           <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
                             <path
                               fillRule="evenodd"
@@ -110,7 +131,7 @@ export default function Pricing() {
         </div>
 
         <div className="mt-16 text-center">
-          <p className="text-gray-400 mb-4">Cancel anytime. Upgrade or downgrade whenever you want.</p>
+          <p className="text-gray-400 mb-4">One-time payment • Instant access • No recurring charges</p>
           <a href="#contact" className="text-gray-300 hover:text-white font-medium">
             Need help choosing? Contact us →
           </a>

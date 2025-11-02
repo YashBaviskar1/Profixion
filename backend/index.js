@@ -1,6 +1,7 @@
 
 import auditRoutes from './routes/audit.js';
 import paymentRoutes from "./routes/payment.js";
+import contactRoutes from "./routes/contact.js";
 import express from "express";
 import dotenv from "dotenv";
 import cors from "cors";
@@ -16,6 +17,7 @@ app.get('/api', (req, res) => {
 // Mount routes with their base paths. This is clear and unambiguous.
 app.use('/api/audit', auditRoutes);
 app.use('/api/payment', paymentRoutes);
+app.use('/api/contact', contactRoutes);
 
 // Default route for checking if the server is up
 app.get('/', (req, res) => {

@@ -4,6 +4,7 @@ import { Mail, Phone, MapPin, Send } from 'lucide-react';
 import toast from 'react-hot-toast';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
+import { submitContact } from '../api';
 
 export default function Contact() {
   const [formData, setFormData] = useState({
@@ -18,12 +19,38 @@ export default function Contact() {
     e.preventDefault();
     setIsSubmitting(true);
     
-    // Simulate form submission
-    setTimeout(() => {
-      toast.success('Message sent successfully! We\'ll get back to you soon.');
-      setFormData({ name: '', email: '', subject: '', message: '' });
+    try {
+      const response = await submitContact(formData);
+      
+      if (response.success) {
+        let successMessage = 'Message sent successfully! We\'ll get back to you soon.';
+        
+        // If in test mode, show preview URL
+        if (response.testMode && response.previewUrl) {
+          successMessage += `\n\n🧪 Test Mode: View email at:\n${response.previewUrl}`;
+          console.log('📧 Email Preview URL:', response.previewUrl);
+        }
+        
+        toast.success(successMessage);
+        setFormData({ name: '', email: '', subject: '', message: '' });
+        
+        // If preview URL exists, also log it
+        if (response.previewUrl) {
+          setTimeout(() => {
+            if (window.confirm(`Test mode: Open email preview?\n\n${response.previewUrl}`)) {
+              window.open(response.previewUrl, '_blank');
+            }
+          }, 500);
+        }
+      } else {
+        toast.error(response.error || 'Failed to send message. Please try again.');
+      }
+    } catch (error) {
+      console.error('Error submitting contact form:', error);
+      toast.error('Failed to send message. Please try again later.');
+    } finally {
       setIsSubmitting(false);
-    }, 1000);
+    }
   };
 
   const handleChange = (e) => {
@@ -345,83 +372,6 @@ export default function Contact() {
                 </form>
               </div>
             </motion.div>
-          </div>
-        </div>
-      </section>
-
-      {/* FAQ Section */}
-      <section className="py-24 px-6 bg-gradient-to-br from-gray-900 via-black to-gray-800 relative overflow-hidden">
-        {/* Background Elements */}
-        <div className="absolute inset-0 overflow-hidden">
-          <div className="absolute top-1/4 -right-32 w-64 h-64 bg-gradient-to-br from-blue-500/10 to-purple-500/10 rounded-full blur-3xl"></div>
-          <div className="absolute bottom-1/4 -left-32 w-64 h-64 bg-gradient-to-br from-green-500/10 to-blue-500/10 rounded-full blur-3xl"></div>
-        </div>
-        
-        <div className="max-w-4xl mx-auto relative z-10">
-          <motion.div 
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8 }}
-            className="text-center mb-16"
-          >
-            <span className="inline-block bg-gradient-to-r from-gray-600 to-gray-800 text-white px-4 py-2 rounded-full text-sm font-medium mb-4">
-              ❓ FAQ
-            </span>
-            <h2 className="text-3xl md:text-4xl font-bold mb-6">
-              Frequently Asked <span className="bg-gradient-to-r from-gray-300 to-gray-500 bg-clip-text text-transparent">Questions</span>
-            </h2>
-            <p className="text-xl text-gray-400 max-w-2xl mx-auto">
-              Quick answers to common questions about our AI audit service
-            </p>
-          </motion.div>
-
-          <div className="space-y-6">
-            {[
-              {
-                question: "Will recruiters really notice my profile after this?",
-                answer: "Yes! Our audit highlights what recruiters look for and helps you stand out in searches however profixion only audits your profiles, provides a social score, gives suggestion. No website can GURANTEE you jobs.",
-                icon: "🎯"
-              },
-              {
-                question: "How is Profixion different from just editing my LinkedIn myself?",
-                answer: "We use professional benchmarks and recruiter insights, not guesswork, so you know exactly what to fix.",
-                icon: "⚡"
-              },
-              {
-                question: "What score is considered \"good\" on Profixion?",
-                answer: "Anything above 75 shows you're in strong shape. Below that, we'll guide you to improve.",
-                icon: "📊"
-              },
-              {
-                question: "Do you rewrite profiles or just give suggestions?",
-                answer: "Right now, we provide audits with actionable tips. Profile makeover services are coming soon!",
-                icon: "✍️"
-              }
-            ].map((faq, index) => (
-              <motion.div
-                key={index}
-                initial={{ opacity: 0, y: 30 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.8, delay: index * 0.1 }}
-                whileHover={{ scale: 1.02, y: -2 }}
-                className="group bg-gradient-to-br from-gray-800 to-gray-900 p-8 rounded-2xl border border-gray-700 hover:border-blue-500/50 transition-all duration-300 relative overflow-hidden"
-              >
-                <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-blue-500/5 to-purple-500/5 rounded-full blur-2xl"></div>
-                <div className="relative z-10">
-                  <div className="flex items-start space-x-4">
-                    <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-purple-500 rounded-xl flex items-center justify-center text-xl group-hover:scale-110 transition-transform duration-300">
-                      {faq.icon}
-                    </div>
-                    <div className="flex-1">
-                      <h3 className="text-xl font-semibold text-white mb-4 group-hover:text-blue-300 transition-colors">
-                        {faq.question}
-                      </h3>
-                      <p className="text-gray-300 leading-relaxed">{faq.answer}</p>
-                    </div>
-                  </div>
-                </div>
-              </motion.div>
-            ))}
           </div>
         </div>
       </section>
