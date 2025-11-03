@@ -11,8 +11,8 @@ const __dirname = path.dirname(__filename);
  * Provides a fallback SVG placeholder if the file is not found.
  */
 function getLogoSrc() {
-  // Resolve path from the root of the project, assuming 'backend' folder
-  const logoPath = path.resolve(process.cwd(), 'backend', 'logo.png');
+  // ✅ FIX: Removed the extra 'backend'. Assumes logo.png is in the same dir as your server script
+  const logoPath = path.resolve(process.cwd(), 'logo.png');
 
   if (fs.existsSync(logoPath)) {
     const logoBase64 = fs.readFileSync(logoPath, 'base64');
@@ -68,8 +68,8 @@ export async function generateAuditPDF(auditData, filename) {
   let browser;
 
   try {
-    // Resolve paths relative to the 'backend' directory
-    const backendDir = path.resolve(process.cwd(), 'backend');
+    // ✅ FIX: 'backendDir' is just the current working directory.
+    const backendDir = process.cwd();
     const reportsDir = path.resolve(backendDir, 'reports');
     console.log(`📁 Reports directory: ${reportsDir}`);
 
@@ -218,8 +218,17 @@ export async function generateAuditPDF(auditData, filename) {
 
         <div class="card">
           <div class="flex items-center gap-2 mb-4">
-            ${iconWeakness.replace('text-red-500', 'text-amber-400')} <!-- Use amber for "improvement" -->
-            <h3 class="text-lg font-semibold text-white">Areas for Improvement</h3>
+            ${iconStrength}
+            <h3 class="text-lg font-semibold text-white">Strengths</h3>
+          </div>
+          <ul class="space-y-3">
+            ${strengthsHTML}
+          </ul>
+        </div>
+        
+        <div class="card">
+          <div class="flex items-center gap-2 mb-4">
+            ${iconWeakness.replace('text-red-500', 'text-amber-400')} <h3 class="text-lg font-semibold text-white">Areas for Improvement</h3>
           </div>
           <ul class="space-y-3">
             ${weaknessesHTML.replace('text-red-500', 'text-amber-400')}
@@ -228,21 +237,10 @@ export async function generateAuditPDF(auditData, filename) {
 
         <div class="card">
           <div class="flex items-center gap-2 mb-4">
-            ${iconImprovement.replace('text-amber-400', 'text-blue-400')} <!-- Use blue for "recommendations" -->
-            <h3 class="text-lg font-semibold text-white">Actionable Recommendations</h3>
+            ${iconImprovement.replace('text-amber-400', 'text-blue-400')} <h3 class="text-lg font-semibold text-white">Actionable Recommendations</h3>
           </div>
           <ul class="space-y-3">
             ${recommendationsHTML.replace('text-amber-400', 'text-blue-400')}
-          </ul>
-        </div>
-        
-        <div class="card">
-          <div class="flex items-center gap-2 mb-4">
-            ${iconStrength}
-            <h3 class="text-lg font-semibold text-white">Strengths</h3>
-          </div>
-          <ul class="space-y-3">
-            ${strengthsHTML}
           </ul>
         </div>
 
@@ -305,4 +303,3 @@ export async function generateAuditPDF(auditData, filename) {
     }
   }
 }
-
