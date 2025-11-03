@@ -11,7 +11,7 @@ const __dirname = path.dirname(__filename);
  * Provides a fallback SVG placeholder if the file is not found.
  */
 function getLogoSrc() {
-  // ✅ FIX: Removed the extra 'backend'. Assumes logo.png is in the same dir as your server script
+  // ✅ FIX: Removed the extra 'backend'. Assumes logo.png is in the server's root directory.
   const logoPath = path.resolve(process.cwd(), 'logo.png');
 
   if (fs.existsSync(logoPath)) {
@@ -51,11 +51,31 @@ function buildListHTML(items, iconSvg) {
   `).join('');
 }
 
+// ✅ NEW: Helper function for the new Parameter Scores
+function buildParameterScoreHTML(scores) {
+  if (!scores || scores.length === 0) {
+    return '<li>No parameter scores found.</li>';
+  }
+  return scores.map(item => `
+    <li class="space-y-1 mb-2">
+      <div class="flex justify-between items-center text-zinc-200">
+        <span class="font-semibold">${item.parameterName}</span>
+        <span class="text-blue-400 font-bold text-lg">${item.score}/10</span>
+      </div>
+      <p class="text-zinc-400 text-xs italic">
+        ${item.justification}
+      </p>
+    </li>
+  `).join('');
+}
+
+
 // Define SVGs for icons
 const iconStrength = `<svg class="w-5 h-5 text-green-500" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" /></svg>`;
 const iconWeakness = `<svg class="w-5 h-5 text-red-500" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM7 9a1 1 0 000 2h6a1 1 0 100-2H7z" clip-rule="evenodd" /></svg>`;
 const iconImprovement = `<svg class="w-5 h-5 text-amber-400" fill="currentColor" viewBox="0 0 20 20"><path d="M4 3a2 2 0 100 4h12a2 2 0 100-4H4z" /><path fill-rule="evenodd" d="M3 8h14v7a2 2 0 01-2 2H5a2 2 0 01-2-2V8zm5 3a1 1 0 011-1h2a1 1 0 110 2H9a1 1 0 01-1-1z" clip-rule="evenodd" /></svg>`;
-const iconActionPlan = `<svg class="w-6 h-6 text-blue-400" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 18v-5.25m0 0a6.01 6.01 0 0 0 1.5-.189m-1.5.189a6.01 6.01 0 0 1-1.5-.189m3.75 7.478a12.06 12.06 0 0 1-4.5 0m3.75 2.383a14.406 14.406 0 0 1-3 0M14.25 18v-.192c0-.983.658-1.823 1.508-2.316a7.5 7.5 0 1 0-7.517 0c.85.493 1.508 1.333 1.508 2.316V18" /></svg>`;
+// Renamed for clarity
+const iconParameterScore = `<svg class="w-6 h-6 text-blue-400" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 18v-5.25m0 0a6.01 6.01 0 0 0 1.5-.189m-1.5.189a6.01 6.01 0 0 1-1.5-.189m3.75 7.478a12.06 12.06 0 0 1-4.5 0m3.75 2.383a14.406 14.406 0 0 1-3 0M14.25 18v-.192c0-.983.658-1.823 1.508-2.316a7.5 7.5 0 1 0-7.517 0c.85.493 1.508 1.333 1.508 2.316V18" /></svg>`;
 
 
 /**
@@ -91,7 +111,7 @@ export async function generateAuditPDF(auditData, filename) {
       strengths: auditData.strengths || [],
       weaknesses: auditData.weaknesses || [],
       recommendations: auditData.recommendations || [],
-      actionPlan: auditData.actionPlan || [],
+      parameterScores: auditData.parameterScores || [], // ✅ UPDATED
     };
     
     // Calculate SVG stroke offset for the progress circle
@@ -102,7 +122,7 @@ export async function generateAuditPDF(auditData, filename) {
     const strengthsHTML = buildListHTML(reportData.strengths, iconStrength);
     const weaknessesHTML = buildListHTML(reportData.weaknesses, iconWeakness);
     const recommendationsHTML = buildListHTML(reportData.recommendations, iconImprovement);
-    const actionPlanHTML = buildListHTML(reportData.actionPlan, iconActionPlan, true); // Use different style for action plan
+    const parameterScoresHTML = buildParameterScoreHTML(reportData.parameterScores); // ✅ NEW
 
     const html = `
 <!DOCTYPE html>
@@ -204,11 +224,11 @@ export async function generateAuditPDF(auditData, filename) {
 
         <div class="card">
           <div class="flex items-center gap-2 mb-4">
-            ${iconActionPlan}
-            <h3 class="text-lg font-semibold text-white">Action Plan</h3>
+            ${iconParameterScore}
+            <h3 class="text-lg font-semibold text-white">Parameter Scores</h3>
           </div>
           <ul class="space-y-3 text-zinc-300">
-            ${actionPlanHTML}
+            ${parameterScoresHTML}
           </ul>
         </div>
         

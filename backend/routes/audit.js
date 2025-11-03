@@ -251,15 +251,12 @@ router.post("/generate-pdf", async (req, res) => {
 router.get("/list-pdfs", async (req, res) => {
   try {
     // Use path.resolve for consistent cross-platform path handling
-    const backendDir = path.resolve(process.cwd(), 'backend');
-    const reportsDir = path.resolve(backendDir, 'reports');
-    const fs = await import('fs');
+   // const backendDir = path.resolve(process.cwd(), 'backend');
+    const reportsDir = path.resolve(process.cwd(), 'reports'); // ✅ FIX
+    const pdfPath = path.resolve(reportsDir, filename);
 
-    // Ensure reports directory exists
-    if (!fs.existsSync(reportsDir)) {
-      console.log(`📁 Creating reports directory: ${reportsDir}`);
-      fs.mkdirSync(reportsDir, { recursive: true });
-    }
+    console.log(`📁 Reports directory: ${reportsDir}`); // Corrected log
+    console.log(`🔍 Looking for PDF at: ${pdfPath}`);
 
     const files = fs.readdirSync(reportsDir).filter(file => file.endsWith('.pdf'));
     res.json({
@@ -287,11 +284,9 @@ router.get("/download-pdf/:filename", async (req, res) => {
 
   try {
     // Use path.resolve for consistent cross-platform path handling
-    const backendDir = path.resolve(process.cwd(), 'backend');
-    const reportsDir = path.resolve(backendDir, 'reports');
+   // const backendDir = path.resolve(process.cwd(), 'backend');
+    const reportsDir = path.resolve(process.cwd(), 'reports');
     const pdfPath = path.resolve(reportsDir, filename);
-
-    console.log(`📁 Backend directory: ${backendDir}`);
     console.log(`📁 Reports directory: ${reportsDir}`);
     console.log(`🔍 Looking for PDF at: ${pdfPath}`);
 
