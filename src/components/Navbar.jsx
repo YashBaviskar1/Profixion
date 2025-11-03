@@ -9,7 +9,7 @@ export default function Navbar() {
         transition={{ duration: 0.6, ease: "easeOut" }}
         className="sticky top-0 backdrop-blur-md bg-black/90 border-b border-gray-800/50 z-50"
       >
-        <div className="max-w-7xl mx-auto px-6 py-4">
+        <div className="max-w-7xl mx-auto px-6 py-3">
           <div className="flex justify-between items-center">
             <motion.div
               whileHover={{ scale: 1.05 }}

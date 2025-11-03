@@ -4,7 +4,7 @@ export default function Logo({ className = "" }) {
       <img 
         src="/logo.png" 
         alt="Profixion Logo" 
-        className="h-12 w-auto"
+        className="h-16 md:h-20 lg:h-24 w-auto"
       />
     </div>
   )

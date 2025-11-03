@@ -109,3 +109,13 @@ export const downloadPDF = async (downloadUrl, filename) => {
     throw error
   }
 }
+
+/**
+ * Submit contact form
+ */
+export const submitContact = async (formData) => {
+  return apiRequest('/contact/submit', {
+    method: 'POST',
+    body: JSON.stringify(formData)
+  })
+}
