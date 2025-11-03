@@ -1,4 +1,3 @@
-// src/components/PDFGenerator.jsx
 import React, { useState, useCallback } from 'react';
 import { PDFDocument, rgb, StandardFonts } from 'pdf-lib';
 
@@ -234,7 +233,7 @@ export default function PDFGenerator({ data }) {
         size: dateSize, font, color: THEME.text 
       });
 
-      const urlText = data.profileUrl || '';
+      const urlText = data.url || data.profileUrl || ''; // Use new 'url' key
       const urlSize = 8;
       const urlWidth = font.widthOfTextAtSize(urlText, urlSize);
       page.drawText(urlText, { 
@@ -273,7 +272,7 @@ export default function PDFGenerator({ data }) {
         size: 12, font, color: THEME.text 
       });
 
-      const score = data.overallScore || 68;
+      const score = data.overallScore || 0;
       const scoreLabel = score >= 70 ? 'Excellent' : score >= 50 ? 'Good' : 'Needs Work';
       
       // Large score display
@@ -393,10 +392,15 @@ export default function PDFGenerator({ data }) {
       y -= 120 + LAYOUT.cardGap;
 
       // Row 3: Strengths & Weaknesses with Action Plan
+      
+      // ✅ CHANGE 1: Define a new height for this row to fit the new content
+      const row3Height = 150; 
+
       // Strengths Card (left)
+      // ✅ CHANGE 2: Update height for this card to match its neighbor
       page.drawRectangle({
-        x: LAYOUT.margin, y: y - 100, 
-        width: cardWidth, height: 100,
+        x: LAYOUT.margin, y: y - row3Height, 
+        width: cardWidth, height: row3Height,
         color: THEME.cardBg, 
         borderColor: THEME.border, 
         borderWidth: 1
@@ -413,7 +417,7 @@ export default function PDFGenerator({ data }) {
         'Recommendations present',
         'Good connection count',
         'Active on LinkedIn'
-      ]).slice(0, 5);
+      ]).slice(0, 5); // Keep it to 5 to fit
 
       let itemY = y - 35;
       strengths.forEach((item, index) => {
@@ -425,10 +429,11 @@ export default function PDFGenerator({ data }) {
           color: THEME.green
         });
         
-        page.drawText('X', { 
-          x: LAYOUT.margin + LAYOUT.cardPadding + 3, y: itemY - 4, 
-          size: 3, font, color: THEME.bg 
-        });
+        // This is a bit of a hack to make a checkmark, replace with a real icon if possible
+        // page.drawText('✓', { 
+        //   x: LAYOUT.margin + LAYOUT.cardPadding + 3, y: itemY - 4, 
+        //   size: 3, font, color: THEME.bg 
+        // });
 
         page.drawText(item, { 
           x: LAYOUT.margin + LAYOUT.cardPadding + 15, y: itemY - 6, 
@@ -437,40 +442,72 @@ export default function PDFGenerator({ data }) {
         itemY -= 12;
       });
 
-      // Action Plan Card (right)
+      
+      // ✅ CHANGE 3: Replaced "Action Plan" with "Parameter Scores"
+      
+      // Parameter Scores Card (right)
       page.drawRectangle({
-        x: LAYOUT.margin + cardWidth + LAYOUT.cardGap, y: y - 100, 
-        width: cardWidth, height: 100,
+        x: LAYOUT.margin + cardWidth + LAYOUT.cardGap, y: y - row3Height, 
+        width: cardWidth, height: row3Height,
         color: THEME.cardBg, 
         borderColor: THEME.border, 
         borderWidth: 1
       });
 
-      page.drawText('Action Plan', { 
+      page.drawText('Parameter Scores', { 
         x: LAYOUT.margin + cardWidth + LAYOUT.cardGap + LAYOUT.cardPadding, y: y - 15, 
         size: 12, font, color: THEME.text 
       });
 
-      // Priority actions with progress bars - using real data
-      const actions = data.actionItems || [
-        { task: 'Add job descriptions', priority: 85, color: THEME.orange },
-        { task: 'Include skills section', priority: 60, color: THEME.blue },
-        { task: 'Create professional summary', priority: 40, color: THEME.green }
+      // Get the new parameter scores data
+      const scores = data.parameterScores || [
+        { parameterName: 'Headline', score: 0, justification: 'N/A' },
+        { parameterName: 'About Section', score: 0, justification: 'N/A' },
+        { parameterName: 'Experience', score: 0, justification: 'N/A' },
+        { parameterName: 'Skills', score: 0, justification: 'N/A' }
       ];
 
-      itemY = y - 35;
-      actions.forEach((action, index) => {
-        page.drawText(action.task, { 
-          x: LAYOUT.margin + cardWidth + LAYOUT.cardGap + LAYOUT.cardPadding, y: itemY - 6, 
+      itemY = y - 35; // Reset Y position for this card's content
+      const scoreCardX = LAYOUT.margin + cardWidth + LAYOUT.cardGap + LAYOUT.cardPadding;
+      const scoreCardWidth = cardWidth - 2 * LAYOUT.cardPadding;
+      
+      scores.slice(0, 4).forEach((item, index) => { // Sliced to 4 to ensure it fits
+        if (itemY < y - row3Height + 20) return; // Stop if we run out of space
+
+        // Draw Parameter Name
+        page.drawText(item.parameterName, { 
+          x: scoreCardX, y: itemY, 
           size: 9, font, color: THEME.text 
         });
+
+        // Draw Score (e.g., "8/10")
+        const scoreText = `${item.score}/10`;
+        const scoreTextWidth = font.widthOfTextAtSize(scoreText, 10);
+        page.drawText(scoreText, {
+          x: scoreCardX + scoreCardWidth - scoreTextWidth, // Align right
+          y: itemY,
+          size: 10, font, color: THEME.blue
+        });
         
-        drawProgressBar(page, LAYOUT.margin + cardWidth + LAYOUT.cardGap + LAYOUT.cardPadding, itemY - 15, cardWidth - 2 * LAYOUT.cardPadding, 4, action.priority, action.color, font);
+        itemY -= 12; // Move down for justification
+
+        // Draw Justification (wrapped)
+        const justificationLines = wrap(font, item.justification, 7, scoreCardWidth);
+        justificationLines.slice(0, 2).forEach(line => { // Max 2 lines of justification
+          if (itemY < y - row3Height + 10) return;
+          page.drawText(line, {
+            x: scoreCardX, y: itemY,
+            size: 7, font, color: THEME.muted
+          });
+          itemY -= 9; // Smaller line height for justification
+        });
         
-        itemY -= 25;
+        itemY -= 5; // Extra padding between items
       });
 
-      y -= 100 + LAYOUT.sectionGap;
+      // ✅ CHANGE 4: Update y-position based on new row height
+      y -= row3Height + LAYOUT.sectionGap;
+
 
       // ---------- FOOTER ----------
       page.drawText(
