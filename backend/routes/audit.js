@@ -220,7 +220,7 @@ router.post("/generate-pdf", async (req, res) => {
     console.log(`✅ PDF generated successfully at: ${pdfPath}`);
 
     // 6️⃣ Return the download URL
-    const baseUrl = process.env.PUBLIC_URL || 'https://558acd4cec29.ngrok-free.app';
+    const baseUrl = process.env.PUBLIC_URL;
     const downloadUrl = `${baseUrl}/api/audit/download-pdf/${filename}.pdf`;
 
     console.log(`🔗 Download URL: ${downloadUrl}`);

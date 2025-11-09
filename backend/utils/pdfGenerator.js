@@ -11,8 +11,7 @@ const __dirname = path.dirname(__filename);
  * Provides a fallback SVG placeholder if the file is not found.
  */
 function getLogoSrc() {
-  // Resolve path from the root of the project, assuming 'backend' folder
-  const logoPath = path.resolve(process.cwd(), 'backend', 'logo.png');
+  const logoPath = path.resolve(process.cwd(), 'logo.png');
 
   if (fs.existsSync(logoPath)) {
     const logoBase64 = fs.readFileSync(logoPath, 'base64');
@@ -20,7 +19,6 @@ function getLogoSrc() {
   }
 
   console.warn('⚠️ logo.png not found. Using a text placeholder.');
-  // Fallback SVG placeholder
   const fallbackSvg = `
     <svg width="240" height="50" xmlns="http://www.w3.org/2000/svg">
       <rect width="240" height="50" fill="transparent"/>
@@ -51,12 +49,39 @@ function buildListHTML(items, iconSvg) {
   `).join('');
 }
 
+// ✅ MODIFIED: Helper function for the new Parameter Scores
+function buildParameterScoreHTML(scores) {
+  if (!scores || scores.length === 0) {
+    return '<li>No parameter scores found.</li>';
+  }
+  return scores.map(item => {
+    // --- START: Score Correction Logic ---
+    let score = parseFloat(item.score);
+    if (isNaN(score)) {
+      score = 0;
+    }
+    const correctedScore = score > 10 ? score / 10 : score;
+    // --- END: Score Correction Logic ---
+
+    return `
+      <li class="space-y-1 mb-2">
+        <div class="flex justify-between items-center text-zinc-200">
+          <span class="font-semibold">${item.parameterName}</span>
+          <span class="text-blue-400 font-bold text-lg">${correctedScore}/10</span>
+        </div>
+        <p class="text-zinc-400 text-xs italic">
+          ${item.justification}
+        </p>
+      </li>
+    `;
+  }).join('');
+}
+
 // Define SVGs for icons
 const iconStrength = `<svg class="w-5 h-5 text-green-500" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" /></svg>`;
 const iconWeakness = `<svg class="w-5 h-5 text-red-500" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM7 9a1 1 0 000 2h6a1 1 0 100-2H7z" clip-rule="evenodd" /></svg>`;
 const iconImprovement = `<svg class="w-5 h-5 text-amber-400" fill="currentColor" viewBox="0 0 20 20"><path d="M4 3a2 2 0 100 4h12a2 2 0 100-4H4z" /><path fill-rule="evenodd" d="M3 8h14v7a2 2 0 01-2 2H5a2 2 0 01-2-2V8zm5 3a1 1 0 011-1h2a1 1 0 110 2H9a1 1 0 01-1-1z" clip-rule="evenodd" /></svg>`;
-const iconActionPlan = `<svg class="w-6 h-6 text-blue-400" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 18v-5.25m0 0a6.01 6.01 0 0 0 1.5-.189m-1.5.189a6.01 6.01 0 0 1-1.5-.189m3.75 7.478a12.06 12.06 0 0 1-4.5 0m3.75 2.383a14.406 14.406 0 0 1-3 0M14.25 18v-.192c0-.983.658-1.823 1.508-2.316a7.5 7.5 0 1 0-7.517 0c.85.493 1.508 1.333 1.508 2.316V18" /></svg>`;
-
+const iconParameterScore = `<svg class="w-6 h-6 text-blue-400" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 18v-5.25m0 0a6.01 6.01 0 0 0 1.5-.189m-1.5.189a6.01 6.01 0 0 1-1.5-.189m3.75 7.478a12.06 12.06 0 0 1-4.5 0m3.75 2.383a14.406 14.406 0 0 1-3 0M14.25 18v-.192c0-.983.658-1.823 1.508-2.316a7.5 7.5 0 1 0-7.517 0c.85.493 1.508 1.333 1.508 2.316V18" /></svg>`;
 
 /**
  * Generate PDF from the structured audit data object
@@ -68,8 +93,7 @@ export async function generateAuditPDF(auditData, filename) {
   let browser;
 
   try {
-    // Resolve paths relative to the 'backend' directory
-    const backendDir = path.resolve(process.cwd(), 'backend');
+    const backendDir = process.cwd();
     const reportsDir = path.resolve(backendDir, 'reports');
     console.log(`📁 Reports directory: ${reportsDir}`);
 
@@ -80,7 +104,6 @@ export async function generateAuditPDF(auditData, filename) {
 
     const logoSrc = getLogoSrc();
 
-    // Use default values if data is missing
     const reportData = {
       score: auditData.overallScore || 0,
       linkedinUrl: auditData.linkedinUrl || '#',
@@ -91,18 +114,16 @@ export async function generateAuditPDF(auditData, filename) {
       strengths: auditData.strengths || [],
       weaknesses: auditData.weaknesses || [],
       recommendations: auditData.recommendations || [],
-      actionPlan: auditData.actionPlan || [],
+      parameterScores: auditData.parameterScores || [],
     };
-    
-    // Calculate SVG stroke offset for the progress circle
-    const circumference = 2 * Math.PI * 60; // 2 * pi * radius
+
+    const circumference = 2 * Math.PI * 60;
     const strokeOffset = circumference * (1 - (reportData.score / 100));
 
-    // Generate dynamic HTML lists
     const strengthsHTML = buildListHTML(reportData.strengths, iconStrength);
     const weaknessesHTML = buildListHTML(reportData.weaknesses, iconWeakness);
     const recommendationsHTML = buildListHTML(reportData.recommendations, iconImprovement);
-    const actionPlanHTML = buildListHTML(reportData.actionPlan, iconActionPlan, true); // Use different style for action plan
+    const parameterScoresHTML = buildParameterScoreHTML(reportData.parameterScores);
 
     const html = `
 <!DOCTYPE html>
@@ -115,17 +136,16 @@ export async function generateAuditPDF(auditData, filename) {
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
     
     body {
-      background-color: #0a0a0a; /* zinc-950, very dark bg for printing */
+      background-color: #0a0a0a;
       font-family: 'Inter', sans-serif;
-      color: #e4e4e7; /* zinc-200 */
-      -webkit-print-color-adjust: exact; /* Force background colors in print */
+      color: #e4e4e7;
+      -webkit-print-color-adjust: exact;
       print-color-adjust: exact;
     }
     
     #pdf-content {
-      width: 794px;   /* A4 width */
-      /* 🛑 REMOVED fixed height: 1123px; */
-      min-height: 1123px; /* ✅ ADDED: Ensures short reports still look good */
+      width: 794px;
+      min-height: 1123px;
       background-color: #000000;
       box-shadow: 0 0 20px rgba(255, 255, 255, 0.05);
       padding: 40px;
@@ -135,7 +155,7 @@ export async function generateAuditPDF(auditData, filename) {
     }
 
     .card {
-      background-color: #18181b; /* zinc-900 */
+      background-color: #18181b;
       border-radius: 12px;
       padding: 24px;
     }
@@ -144,7 +164,6 @@ export async function generateAuditPDF(auditData, filename) {
 
 <body class="flex items-center justify-center min-h-screen">
   <div id="pdf-content">
-    
     <header class="flex flex-col items-center pt-2 pb-6 border-b border-zinc-700">
       <img src="${logoSrc}" alt="PROFIXION" class="h-10">
       <span class="text-xs uppercase tracking-[0.2em] text-zinc-500 mt-2">Fix • Polish • Shine Online</span>
@@ -164,9 +183,8 @@ export async function generateAuditPDF(auditData, filename) {
     </section>
 
     <main class="mt-8 grid grid-cols-12 gap-6 flex-grow">
-      
       <div class="col-span-5 flex flex-col gap-6">
-        
+
         <div class="card flex flex-col items-center">
           <h3 class="text-lg font-semibold text-white mb-4">Profile Strength</h3>
           <div class="relative w-48 h-48">
@@ -204,38 +222,18 @@ export async function generateAuditPDF(auditData, filename) {
 
         <div class="card">
           <div class="flex items-center gap-2 mb-4">
-            ${iconActionPlan}
-            <h3 class="text-lg font-semibold text-white">Action Plan</h3>
+            ${iconParameterScore}
+            <h3 class="text-lg font-semibold text-white">Parameter Scores</h3>
           </div>
           <ul class="space-y-3 text-zinc-300">
-            ${actionPlanHTML}
+            ${parameterScoresHTML}
           </ul>
         </div>
-        
+
       </div>
 
       <div class="col-span-7 flex flex-col gap-6">
 
-        <div class="card">
-          <div class="flex items-center gap-2 mb-4">
-            ${iconWeakness.replace('text-red-500', 'text-amber-400')} <!-- Use amber for "improvement" -->
-            <h3 class="text-lg font-semibold text-white">Areas for Improvement</h3>
-          </div>
-          <ul class="space-y-3">
-            ${weaknessesHTML.replace('text-red-500', 'text-amber-400')}
-          </ul>
-        </div>
-
-        <div class="card">
-          <div class="flex items-center gap-2 mb-4">
-            ${iconImprovement.replace('text-amber-400', 'text-blue-400')} <!-- Use blue for "recommendations" -->
-            <h3 class="text-lg font-semibold text-white">Actionable Recommendations</h3>
-          </div>
-          <ul class="space-y-3">
-            ${recommendationsHTML.replace('text-amber-400', 'text-blue-400')}
-          </ul>
-        </div>
-        
         <div class="card">
           <div class="flex items-center gap-2 mb-4">
             ${iconStrength}
@@ -246,48 +244,57 @@ export async function generateAuditPDF(auditData, filename) {
           </ul>
         </div>
 
+        <div class="card">
+          <div class="flex items-center gap-2 mb-4">
+            ${iconWeakness.replace('text-red-500', 'text-amber-400')} <h3 class="text-lg font-semibold text-white">Areas for Improvement</h3>
+          </div>
+          <ul class="space-y-3">
+            ${weaknessesHTML.replace('text-red-500', 'text-amber-400')}
+          </ul>
+        </div>
+
+        <div class="card">
+          <div class="flex items-center gap-2 mb-4">
+            ${iconImprovement.replace('text-amber-400', 'text-blue-400')} <h3 class="text-lg font-semibold text-white">Actionable Recommendations</h3>
+          </div>
+          <ul class="space-y-3">
+            ${recommendationsHTML.replace('text-amber-400', 'text-blue-400')}
+          </ul>
+        </div>
+
       </div>
     </main>
 
     <footer class="absolute bottom-6 left-0 right-0 text-center text-zinc-500 text-xs px-10">
       Generated by <span class="font-semibold text-zinc-300">Profixion</span> - Enhance your online presence with AI-driven social media insights
     </footer>
-    
+
   </div>
 </body>
 </html>
-  `;
+    `;
 
-    // Launch Puppeteer
     browser = await puppeteer.launch({
-      headless: 'new', // Use the new headless mode
+      headless: 'new',
       args: ['--no-sandbox', '--disable-setuid-sandbox']
     });
 
     const page = await browser.newPage();
-
-    // Set content and wait for network (Tailwind CDN, fonts)
     await page.setContent(html, { waitUntil: "networkidle0", timeout: 30000 });
 
-    // ✅ NEW: Get the actual height of the content
     const pageHeight = await page.evaluate(() => {
       return document.documentElement.scrollHeight;
     });
 
-    // Generate PDF
     const pdfPath = path.resolve(reportsDir, `${filename}.pdf`);
-    console.log(`📄 Generating PDF at: ${pdfPath}`);
-    
-    // ✅ UPDATED: Removed 'format' and now use dynamic height
     await page.pdf({
       path: pdfPath,
-      width: '794px', // Keep the A4 width
-      height: `${pageHeight}px`, // Use the calculated dynamic height
-      printBackground: true, // Crucial for dark mode
+      width: '794px',
+      height: `${pageHeight}px`,
+      printBackground: true,
       margin: { top: 0, bottom: 0, left: 0, right: 0 },
     });
 
-    // Verify the file was created
     if (!fs.existsSync(pdfPath)) {
       throw new Error(`PDF file was not created at: ${pdfPath}`);
     }
@@ -305,4 +312,3 @@ export async function generateAuditPDF(auditData, filename) {
     }
   }
 }
-

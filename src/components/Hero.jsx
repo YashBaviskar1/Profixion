@@ -1,9 +1,52 @@
 import { motion } from 'framer-motion'
+import { useState, useEffect, useRef } from 'react'
 
 export default function Hero() {
-  const scrollToFeatures = () => {
-    document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' })
+  const [isModalOpen, setIsModalOpen] = useState(false)
+  const videoRef = useRef(null)
+
+  const openModal = () => {
+    setIsModalOpen(true)
   }
+
+  const closeModal = () => {
+    setIsModalOpen(false)
+  }
+
+  // Handle video autoplay and pause
+  useEffect(() => {
+    if (isModalOpen && videoRef.current) {
+      videoRef.current.play().catch(err => {
+        console.log('Autoplay prevented:', err)
+      })
+    } else if (!isModalOpen && videoRef.current) {
+      videoRef.current.pause()
+      videoRef.current.currentTime = 0 // Reset video to beginning
+    }
+  }, [isModalOpen])
+
+  // Close modal on Escape key
+  useEffect(() => {
+    const handleEscape = (e) => {
+      if (e.key === 'Escape' && isModalOpen) {
+        closeModal()
+      }
+    }
+    document.addEventListener('keydown', handleEscape)
+    return () => document.removeEventListener('keydown', handleEscape)
+  }, [isModalOpen])
+
+  // Prevent body scroll when modal is open
+  useEffect(() => {
+    if (isModalOpen) {
+      document.body.style.overflow = 'hidden'
+    } else {
+      document.body.style.overflow = 'unset'
+    }
+    return () => {
+      document.body.style.overflow = 'unset'
+    }
+  }, [isModalOpen])
 
   return (
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden bg-gradient-to-br from-gray-900 via-black to-gray-800">
@@ -120,7 +163,7 @@ export default function Hero() {
 
               {/* Secondary CTA - See How It Works */}
               <motion.button 
-                onClick={scrollToFeatures}
+                onClick={openModal}
                 className="px-8 py-4 border-2 border-gray-600 text-gray-300 font-semibold rounded-xl hover:bg-gray-800/50 transition-all duration-300"
                 whileHover={{ scale: 1.05, y: -2 }}
                 whileTap={{ scale: 0.95 }}
@@ -292,6 +335,64 @@ export default function Hero() {
           </motion.div>
         </div>
       </div>
+
+      {/* Video Modal */}
+      {isModalOpen && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="fixed inset-0 z-50 flex items-center justify-center"
+          onClick={closeModal}
+        >
+          {/* Dark semi-transparent overlay */}
+          <div className="absolute inset-0 bg-black/80 backdrop-blur-sm"></div>
+          
+          {/* Modal content */}
+          <motion.div
+            initial={{ scale: 0.9, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            exit={{ scale: 0.9, opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="relative z-10 w-full max-w-5xl mx-4"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Close button */}
+            <button
+              onClick={closeModal}
+              className="absolute -top-12 right-0 text-white hover:text-gray-300 transition-colors duration-200 z-20"
+              aria-label="Close modal"
+            >
+              <svg
+                className="w-10 h-10"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M6 18L18 6M6 6l12 12"
+                />
+              </svg>
+            </button>
+
+            {/* Video container */}
+            <div className="relative w-full rounded-lg overflow-hidden shadow-2xl bg-black">
+              <video
+                ref={videoRef}
+                src="/profixion_tutorial.mp4"
+                controls
+                className="w-full h-auto max-h-[80vh]"
+                playsInline
+              >
+                Your browser does not support the video tag.
+              </video>
+            </div>
+          </motion.div>
+        </motion.div>
+      )}
     </section>
   )
 }

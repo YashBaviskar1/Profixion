@@ -22,6 +22,14 @@ PORT=5000
 3. Generate a new key pair
 4. Copy the Key ID and Key Secret to your `.env` file
 
+## Security-related Environment Variables
+
+- `ALLOWED_ORIGINS` — Comma-separated allowed origins for CORS (default: none)
+- `ALLOW_CREDENTIALS` — `true|false` to allow credentialed CORS (default: false)
+- `DISABLE_CSP` — Set `1` to disable Content Security Policy (default: enabled)
+- `HSTS_PRELOAD` — Set `1` to add preload to HSTS when `NODE_ENV=production`
+- `PUBLIC_URL` — Public base URL of this API used in callbacks/webhooks
+
 ### 4. Run the Server
 ```bash
 # Development mode
