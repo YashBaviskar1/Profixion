@@ -382,7 +382,7 @@ export default function Hero() {
             <div className="relative w-full rounded-lg overflow-hidden shadow-2xl bg-black">
               <video
                 ref={videoRef}
-                src="/profixion_tutorial.mp4"
+                src="https://res.cloudinary.com/dth2rinzf/video/upload/v1762682216/profixion_tutorial_cz2459.mp4"
                 controls
                 className="w-full h-auto max-h-[80vh]"
                 playsInline
