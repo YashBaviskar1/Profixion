@@ -81,7 +81,7 @@ Guidelines:
 - Strictly adhere to the requested number of points for each list as defined in the JSON schema.
 - Extract the 'full_name', 'headline', and 'public_identifier' (or 'linkedin_profile_url') directly from the provided JSON.
 - You MUST provide exactly 4 'parameterScores' objects for: 'Headline', 'About Section', 'Experience Details', and 'Skills & Certifications'.
-- The 'overallScore' should be a weighted average of these parameter scores.`;
+- The 'overallScore' should be a weighted average of these parameter scores and should be in whole number.`;
 
 // Configure the model
 const model = genAI.getGenerativeModel({
