@@ -35,44 +35,56 @@ export default function PaymentButton({ amount = 499, trackingId, onSuccess, pre
       setIsPaying(true);
       const { order, keyId } = await createOrder();
 
-      const options = {
-        key: keyId,
-        amount: order.amount,
-        currency: order.currency,
-        name: "Profixion",
-        description: "Audit Payment",
-        order_id: order.id,
-        redirect : false,
-        handler: async function (response) {
-          try {
-            const result = await verifyPayment({
-              razorpay_order_id: response.razorpay_order_id,
-              razorpay_payment_id: response.razorpay_payment_id,
-              razorpay_signature: response.razorpay_signature,
-              trackingId,
-            });
-            if (result.success) {
-              toast.success("Payment successful");
-              try { localStorage.setItem('auditPaid', '1'); } catch {}
-              if (typeof onSuccess === 'function') {
-                onSuccess(result);
-              }
-            } else {
-              toast.error(result.error || "Payment verification failed");
-            }
-          } catch (err) {
-            toast.error("Verification failed");
-          }
-        },
-        prefill: prefill || { name: "Test User", email: "test@example.com", contact: "9999999999" },
-        theme: { color: "#111827" },
-      };
+const options = {
+  key: keyId,
+  amount: order.amount,
+  currency: order.currency,
+  name: "Profixion",
+  description: "Audit Payment",
+  order_id: order.id,
+  handler: async function (response) {
+    try {
+      const result = await verifyPayment({
+        razorpay_order_id: response.razorpay_order_id,
+        razorpay_payment_id: response.razorpay_payment_id,
+        razorpay_signature: response.razorpay_signature,
+        trackingId,
+      });
+
+      if (result.success) {
+        toast.success("Payment successful");
+        localStorage.setItem("auditPaid", "1");
+
+        // Small delay to ensure Razorpay finishes its cleanup
+        setTimeout(() => {
+          if (typeof onSuccess === "function") onSuccess(result);
+        }, 300);
+      } else {
+        toast.error(result.error || "Payment verification failed");
+      }
+    } catch (err) {
+      toast.error("Verification failed");
+    }
+  },
+  prefill: prefill || { name: "Test User", email: "test@example.com", contact: "9999999999" },
+  theme: { color: "#111827" },
+  redirect: false, // 👈 absolutely required
+  modal: {
+    ondismiss: function () {
+      console.log("Payment popup closed by user");
+    },
+  },
+};
+
 
       const rz = new window.Razorpay(options);
       rz.on("payment.failed", function () {
         toast.error("Payment failed");
       });
       rz.open();
+      window.addEventListener("popstate", () => {
+      rz.close();
+    });
     } catch (error) {
       console.error("Payment init error:", error);
       toast.error("Unable to start payment");

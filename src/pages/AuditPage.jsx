@@ -9,12 +9,13 @@ const ScoreCircle = ({ score }) => {
   const circumference = 2 * Math.PI * 52; // 2 * pi * radius
   const offset = circumference - (score / 100) * circumference;
 
-  return (
+return (
     <div className="relative w-40 h-40">
       <svg className="w-full h-full" viewBox="0 0 120 120">
-        <circle className="text-gray-700" strokeWidth="10" stroke="currentColor" fill="transparent" r="52" cx="60" cy="60" />
+        {/* Background circle (made darker) */}
+        <circle className="text-gray-800" strokeWidth="10" stroke="currentColor" fill="transparent" r="52" cx="60" cy="60" />
         <motion.circle
-          className="text-gray-400"
+          className="text-gray-200"
           strokeWidth="10"
           strokeDasharray={circumference}
           strokeDashoffset={offset}
@@ -31,8 +32,10 @@ const ScoreCircle = ({ score }) => {
         />
       </svg>
       <div className="absolute inset-0 flex items-center justify-center">
-        <span className="text-4xl font-bold bg-gradient-to-r from-gray-300 to-gray-500 bg-clip-text text-transparent">{score}</span>
-        <span className="text-lg text-gray-400 mt-1">/100</span>
+        {/* Score text (made much brighter) */}
+        <span className="text-4xl font-bold bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">{score}</span>
+        {/* /100 text (made brighter) */}
+        <span className="text-lg text-gray-300 mt-1">/100</span>
       </div>
     </div>
   );
@@ -373,10 +376,10 @@ const AuditPage = () => {
               {/* UPDATED HEADER SECTION */}
               <div className="flex flex-col md:flex-row justify-between items-center mb-8 border-b border-gray-800 pb-6 gap-6">
                 {/* Left side: Title and URL */}
-                <div className="flex-grow">
-                  <h2 className="text-3xl font-bold text-white">Your Audit Report is Ready</h2>
+                <div className="flex-grow min-w-0">
+                  <h2 className="text-3xl font-bold text-white break-words">Your Audit Report is Ready</h2>
                   {/* ✅ UPDATED: Use `report.url` from the new JSON */}
-                  <p className="text-gray-400 truncate">Analysis for: {report.url}</p>
+                  <p className="text-gray-400 truncate break-all">Analysis for: {report.url}</p>
                 </div>
                 {/* Right side: ScoreCircle and PDF Button */}
                 <div className="flex flex-col items-center gap-4">
