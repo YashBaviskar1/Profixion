@@ -1,3 +1,4 @@
+// Your App.jsx
 import React from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { Toaster } from "react-hot-toast";
@@ -11,9 +12,15 @@ import Dashboard from "./pages/Dashboard";
 import StartAudit from "./pages/StartAudit";
 import PreviewAudit from "./pages/PreviewAudit";
 
+// Import the new tracker component
+import AnalyticsTracker from "./components/AnalyticsTracker"; // Adjust the path if needed
+
 function App() {
   return (
     <BrowserRouter>
+      {/* Add the tracker component here */}
+      <AnalyticsTracker />
+      
       <Routes>
         <Route path="/" element={<LandingPage />} />
         <Route path="/audit/:trackingId" element={<AuditPage />} />
@@ -25,27 +32,11 @@ function App() {
         <Route path="/blog" element={<Blog />} />
         <Route path="/preview" element={<PreviewAudit />} />
       </Routes>
+      
       <Toaster 
         position="top-right"
         toastOptions={{
-          duration: 4000,
-          style: {
-            background: '#1f2937',
-            color: '#fff',
-            border: '1px solid #374151',
-          },
-          success: {
-            iconTheme: {
-              primary: '#10b981',
-              secondary: '#fff',
-            },
-          },
-          error: {
-            iconTheme: {
-              primary: '#ef4444',
-              secondary: '#fff',
-            },
-          },
+          // ... your toast options
         }}
       />
     </BrowserRouter>
