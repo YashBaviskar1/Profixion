@@ -1,7 +1,7 @@
 import { useState } from "react";
 import toast from "react-hot-toast";
 import API_BASE_URL from "../config";   // 👈 use shared config
-
+import { trackPurchaseConversion } from "../utils/googleAds";
 export default function PaymentButton({ amount = 499, trackingId, onSuccess, prefill }) {
   const [isPaying, setIsPaying] = useState(false);
 
@@ -54,7 +54,7 @@ const options = {
       if (result.success) {
         toast.success("Payment successful");
         localStorage.setItem("auditPaid", "1");
-
+        trackPurchaseConversion(response.razorpay_payment_id);
         // Small delay to ensure Razorpay finishes its cleanup
         setTimeout(() => {
           if (typeof onSuccess === "function") onSuccess(result);

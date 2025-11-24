@@ -5,7 +5,7 @@ import API_BASE_URL from './config'
  */
 const apiRequest = async (endpoint, options = {}) => {
   const url = `${API_BASE_URL}${endpoint}`
-  
+  console.log("Correct API : ", API_BASE_URL)
   const defaultOptions = {
     headers: {
       'Content-Type': 'application/json',
