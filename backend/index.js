@@ -5,6 +5,7 @@ import contactRoutes from "./routes/contact.js";
 import express from "express";
 import dotenv from "dotenv";
 import cors from "cors";
+import statsRoutes from "./routes/stats.js";
 dotenv.config();
 const app = express();
 const port = process.env.PORT || 3001;
@@ -18,7 +19,7 @@ app.get('/api', (req, res) => {
 app.use('/api/audit', auditRoutes);
 app.use('/api/payment', paymentRoutes);
 app.use('/api/contact', contactRoutes);
-
+app.use('/api/stats', statsRoutes);
 // Default route for checking if the server is up
 app.get('/', (req, res) => {
   res.send('Social Media Audit Engine Backend is running!');
