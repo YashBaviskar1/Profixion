@@ -210,7 +210,7 @@ const AuditPage = () => {
   const [error, setError] = useState(null);
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
 
-  // ⛔️ REMOVED the `parseAuditReport` function. It's no longer needed!
+
 
   // useEffect to fetch and poll for the audit status
   useEffect(() => {
@@ -376,10 +376,15 @@ const AuditPage = () => {
               {/* UPDATED HEADER SECTION */}
               <div className="flex flex-col md:flex-row justify-between items-center mb-8 border-b border-gray-800 pb-6 gap-6">
                 {/* Left side: Title and URL */}
-                <div className="flex-grow min-w-0">
-                  <h2 className="text-3xl font-bold text-white break-words">Your Audit Report is Ready</h2>
-                  {/* ✅ UPDATED: Use `report.url` from the new JSON */}
-                  <p className="text-gray-400 truncate break-all">Analysis for: {report.url}</p>
+              <div className="flex-grow min-w-0 w-full text-center md:text-left">
+                    {/* Added: text-2xl (Smaller font on mobile) */}
+                    <h2 className="text-4xl sm:text-3xl font-bold text-white break-words leading-tight">
+                      Your Audit Report is Ready
+                    </h2>
+                    {/* Added: break-all (Wraps long URLs nicely), Removed: truncate */}
+                    <p className="text-gray-400 mt-2 text-sm sm:text-base break-all">
+                      Analysis for: <span className="text-blue-400/80">{report.url}</span>
+                    </p>
                 </div>
                 {/* Right side: ScoreCircle and PDF Button */}
                 <div className="flex flex-col items-center gap-4">
